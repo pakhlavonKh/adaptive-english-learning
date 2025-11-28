@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  theta     Float    @default(0.0)
+  responses Response[]
+}
+
+model Question {
+  id              Int       @id @default(autoincrement())
+  text            String
+  answer          String
+  difficulty      Float     @default(0.0)
+  discrimination  Float     @default(1.0)
+  responses       Response[]
+}
+
+model Response {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  questionId  Int
+  correct     Boolean
+  timestamp   DateTime @default(now())
+  nextReview  DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  question    Question @relation(fields: [questionId], references: [id])
+}
