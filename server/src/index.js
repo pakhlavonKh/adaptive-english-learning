@@ -43,12 +43,12 @@ app.get('/api/next-question', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
 
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET) as { userId: number };
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     const questions = await prisma.question.findMany();
-    const responses = await prisma.response.findMany({ where userId });
+    const responses = await prisma.response.findMany({ where: { userId } });
 
     const now = new Date();
     const dueQuestions = questions.filter(q => {
@@ -79,9 +79,12 @@ app.post('/api/submit', async (req, res) => {
   const { questionId, correct } = req.body;
 
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET) as { userId: number };
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
     const question = await prisma.question.findUnique({ where: { id: questionId } });
-    if (!question) return res.status(404).json({ error “Question not found” });
+    if (!question) return res.status(404).json({ error: 'Question not found' });
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Spaced repetition interval
     let interval = 1;
@@ -90,29 +93,31 @@ app.post('/api/submit', async (req, res) => {
       orderBy: { timestamp: 'desc' }
     });
     if (last && last.correct) {
-      interval = Math.max(1, (new Date().getTime() - new Date(last.nextReview).getTime()) / 86400000 * 2);
+      const daysSince = (Date.now() - new Date(last.timestamp).getTime()) / 86400000;
+      interval = Math.max(1, daysSince * 2);
     }
 
+    const nextReview = new Date(Date.now() + interval * 24 * 60 * 60 * 1000);
     await prisma.response.create({
       data: {
         userId,
         questionId,
         correct,
-        nextReview: new Date(Date.now() + interval * 24 * 60 * 60 * 1000)
+        nextReview
       }
     });
 
     // Update user ability (simple Elo-like)
     const k = 0.5;
     const expected = 1 / (1 + Math.exp(-(user.theta - question.difficulty)));
-    const newTheta = user.theta + k * (correct ? 1 : 0 - expected);
+    const newTheta = user.theta + k * ((correct ? 1 : 0) - expected);
 
     await prisma.user.update({
       where: { id: userId },
       data: { theta: newTheta }
     });
 
-    res.json({ newTheta, correct });
+    res.json({ newTheta, correct, nextReview });
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
   }
