@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { login } from '../api';
 
-export default function Login({ onLogin }){
+export default function Login({ onLogin, onSwitchToRegister }){
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState(null);
@@ -23,6 +23,7 @@ export default function Login({ onLogin }){
       <input placeholder="username" value={username} onChange={e=>setUsername(e.target.value)} />
       <input placeholder="password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
       <button type="submit">Login</button>
+      <p className="auth-switch">Don't have an account? <button type="button" className="link-button" onClick={onSwitchToRegister}>Sign up</button></p>
     </form>
   );
 }
