@@ -4,26 +4,26 @@ const cors = require('cors');
 const analyticsService = require('./service');
 
 const app = express();
-const PORT = 8000; // Python ile aynı portu kullanalım
+const PORT = 8000; 
 
-// Middleware (CORS izni ve JSON okuma)
+// Middleware (Enable CORS and JSON parsing)
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Bağlantısı
+// MongoDB Connection
 const MONGO_URI = 'mongodb://localhost:27017/learning_db';
 mongoose.connect(MONGO_URI)
-    .then(() => console.log("✅ MongoDB Bağlantısı Başarılı"))
-    .catch(err => console.error("❌ MongoDB Bağlantı Hatası:", err));
+    .then(() => console.log(" MongoDB Connection Successfull"))
+    .catch(err => console.error(" MongoDB Connection Error:", err));
 
 // --- API ENDPOINTS ---
 
-// Ana sayfa testi
+// Homepage Test Route
 app.get('/', (req, res) => {
     res.json({ message: "Analytics Service (Node.js) Çalışıyor! 🚀" });
 });
 
-// Sınıf Raporu Endpoint'i
+// Class Report Endpoint
 app.get('/api/reports/class/:classId', async (req, res) => {
     const classId = req.params.classId;
     
@@ -38,7 +38,7 @@ app.get('/api/reports/class/:classId', async (req, res) => {
     }
 });
 
-// Sunucuyu Başlat
+// Start the Server
 app.listen(PORT, () => {
-    console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
+    console.log(`Server running at: http://localhost:${PORT}`);
 });
