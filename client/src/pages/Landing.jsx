@@ -1,4 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { Target, BookOpen, BarChart2, Zap, Globe2, Trophy } from 'lucide-react';
+// SVG illustrations (inline for demo)
+const HeroSVG = () => (
+  <svg width="320" height="220" viewBox="0 0 320 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginBottom: 24}}>
+    <ellipse cx="160" cy="110" rx="150" ry="90" fill="#e0e7ff" />
+    <rect x="80" y="60" width="160" height="100" rx="20" fill="#667eea" />
+    <text x="160" y="120" textAnchor="middle" fontSize="32" fill="white" fontFamily="Segoe UI">Learn English</text>
+  </svg>
+);
+
+const FeatureSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="40" cy="40" r="36" fill="#f9fafb" stroke="#667eea" strokeWidth="4" />
+    <path d="M40 20v40M20 40h40" stroke="#667eea" strokeWidth="4" strokeLinecap="round" />
+  </svg>
+);
 
 const testimonials = [
   {
@@ -29,33 +45,27 @@ const testimonials = [
 
 const features = [
   {
-    icon: '🎯',
-    title: 'Adaptive Learning',
+    icon: <Target color="#667eea" size={40} />, title: 'Adaptive Learning',
     description: 'Questions automatically adjust to match your skill level using IRT (Item Response Theory) algorithms.'
   },
   {
-    icon: '📚',
-    title: 'Spaced Repetition',
+    icon: <BookOpen color="#667eea" size={40} />, title: 'Spaced Repetition',
     description: 'Scientifically-proven spacing algorithm ensures optimal retention of vocabulary and concepts.'
   },
   {
-    icon: '📊',
-    title: 'Progress Tracking',
+    icon: <BarChart2 color="#667eea" size={40} />, title: 'Progress Tracking',
     description: 'Monitor your improvement with our theta ability scoring system in real-time.'
   },
   {
-    icon: '⚡',
-    title: 'Fast & Efficient',
+    icon: <Zap color="#667eea" size={40} />, title: 'Fast & Efficient',
     description: 'Learn effectively with short, focused sessions that fit into your busy schedule.'
   },
   {
-    icon: '🌍',
-    title: 'Globally Curated Content',
+    icon: <Globe2 color="#667eea" size={40} />, title: 'Globally Curated Content',
     description: 'Practice with questions covering diverse topics and real-world English usage.'
   },
   {
-    icon: '🏆',
-    title: 'Proven Results',
+    icon: <Trophy color="#667eea" size={40} />, title: 'Proven Results',
     description: 'Join thousands of learners who have achieved their English language goals.'
   }
 ];
@@ -107,15 +117,17 @@ export default function Landing({ onGetStarted }) {
         </div>
       </header>
 
-      {/* Hero Carousel */}
-      <section className="hero-carousel">
+      {/* Hero Carousel with SVG and photo */}
+      <section className="hero-carousel" style={{position: 'relative'}}>
+        <img src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80" alt="Students" style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover',opacity:0.18,zIndex:0}} />
         <div 
           className="carousel-slide"
-          style={{ background: carouselSlides[carouselIndex].gradient }}
+          style={{ background: carouselSlides[carouselIndex].gradient, position:'relative', zIndex:1 }}
         >
           <div className="carousel-content">
-            <h1>{carouselSlides[carouselIndex].title}</h1>
-            <p>{carouselSlides[carouselIndex].subtitle}</p>
+            <HeroSVG />
+            <h1 style={{fontWeight:800,letterSpacing:'-2px'}}>{carouselSlides[carouselIndex].title}</h1>
+            <p style={{fontSize:22,marginBottom:32}}>{carouselSlides[carouselIndex].subtitle}</p>
             <button className="cta-button-large" onClick={onGetStarted}>Start Learning Now</button>
           </div>
           <div className="carousel-indicator">
@@ -130,16 +142,17 @@ export default function Landing({ onGetStarted }) {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section with SVG icons */}
       <section id="features" className="features-section">
         <div className="section-container">
           <h2 className="section-title">Why Choose Adaptive English?</h2>
           <p className="section-subtitle">Leverage cutting-edge AI and learning science</p>
-          
           <div className="features-grid">
             {features.map((feature, idx) => (
               <div key={idx} className="feature-card-large">
-                <div className="feature-icon">{feature.icon}</div>
+                <div className="feature-icon" style={{marginBottom:8}}>
+                  {feature.icon}
+                </div>
                 <h3>{feature.title}</h3>
                 <p>{feature.description}</p>
               </div>
@@ -170,25 +183,23 @@ export default function Landing({ onGetStarted }) {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Testimonials Section with photo avatars */}
       <section id="testimonials" className="testimonials-section">
         <div className="section-container">
           <h2 className="section-title">What Our Learners Say</h2>
           <p className="section-subtitle">Real stories from real students</p>
-          
           <div className="testimonial-carousel">
             <button className="carousel-nav prev" onClick={prevTestimonial}>❮</button>
-            
             <div className="testimonial-card">
-              <div className="testimonial-avatar">{testimonials[testimonialIndex].avatar}</div>
+              <div className="testimonial-avatar">
+                <img src={`https://randomuser.me/api/portraits/${testimonialIndex % 2 === 0 ? 'women' : 'men'}/${testimonialIndex + 10}.jpg`} alt="avatar" style={{width:60,height:60,borderRadius:'50%',objectFit:'cover',boxShadow:'0 2px 8px #667eea55'}} />
+              </div>
               <p className="testimonial-text">"{testimonials[testimonialIndex].feedback}"</p>
               <h4 className="testimonial-name">{testimonials[testimonialIndex].name}</h4>
               <p className="testimonial-role">{testimonials[testimonialIndex].role}</p>
             </div>
-            
             <button className="carousel-nav next" onClick={nextTestimonial}>❯</button>
           </div>
-
           <div className="testimonial-dots">
             {testimonials.map((_, i) => (
               <div
