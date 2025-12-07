@@ -32,3 +32,6 @@ yarn-error.log*
 # Misc
 coverage/
 .cache/
+
+__pycache__/
+*.pyc
