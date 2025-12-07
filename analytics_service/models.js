@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
-// Öğrenci Şeması
+// Student Schema
 const StudentSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true },
     current_level: { type: String, default: 'A1' }
 });
 
-// İlerleme Şeması (Progress)
+// Progress Schema
 const StudentProgressSchema = new mongoose.Schema({
     student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' }, // Öğrenciye referans
     lesson_id: { type: Number, required: true },
@@ -16,7 +16,7 @@ const StudentProgressSchema = new mongoose.Schema({
     last_updated: { type: Date, default: Date.now }
 });
 
-// Modelleri dışarı aktar
+// Export models
 const Student = mongoose.model('Student', StudentSchema);
 const StudentProgress = mongoose.model('StudentProgress', StudentProgressSchema);
 
