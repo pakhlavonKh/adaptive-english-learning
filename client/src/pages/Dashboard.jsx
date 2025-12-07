@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getNextQuestion, submit, seed } from '../api';
+import LearningPath from './LearningPath';
 
 export default function Dashboard({ token, user, onLogout }){
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState('');
   const [status, setStatus] = useState(null);
+  const [showPath, setShowPath] = useState(false);
 
   const load = async () => {
     try{
@@ -43,6 +45,7 @@ export default function Dashboard({ token, user, onLogout }){
         <div>
           <button onClick={onLogout}>Logout</button>
           <button onClick={async ()=>{ await seed(); await load(); }}>Seed</button>
+          <button onClick={()=>setShowPath(s=>!s)}>{showPath ? 'Hide' : 'View'} Learning Path</button>
         </div>
       </div>
 
@@ -56,6 +59,11 @@ export default function Dashboard({ token, user, onLogout }){
         </form>
       ) : (
         <div className="card">No questions due right now.</div>
+      )}
+      {showPath && (
+        <div style={{marginTop:12}}>
+          <LearningPath token={token} />
+        </div>
       )}
     </div>
   );

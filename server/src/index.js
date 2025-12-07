@@ -1,12 +1,28 @@
 import express from 'express';
 import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+// load environment variables from server/.env if present
+dotenv.config({ path: process.env.ENV_PATH || './server/.env' });
+import { connectMongo } from './db/mongo.js';
+import ModuleModel from './models/module.js';
+import UserModel from './models/user.js';
+import QuestionModel from './models/question.js';
+import ResponseModel from './models/response.js';
 
 const app = express();
-const prisma = new PrismaClient();
-const JWT_SECRET = 'your-jwt-secret';
+// const prisma = new PrismaClient();
+const MONGODB_URI = process.env.MONGODB_URI || '';
+
+// connect to MongoDB (non-blocking)
+connectMongo(MONGODB_URI).then(()=>{
+  console.log('Connected to MongoDB');
+}).catch(err => {
+  console.warn('MongoDB not connected:', err.message);
+});
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret';
 
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
@@ -16,10 +32,8 @@ app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   const hashed = await bcrypt.hash(password, 10);
   try {
-    const user = await prisma.user.create({
-      data: { username, password: hashed }
-    });
-    res.json({ id: user.id, username: user.username });
+    const user = await UserModel.create({ username, password: hashed });
+    res.json({ id: user._id, username: user.username });
   } catch (e) {
     res.status(400).json({ error: 'User exists' });
   }
@@ -28,10 +42,10 @@ app.post('/api/register', async (req, res) => {
 // Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = await UserModel.findOne({ username });
   if (user && await bcrypt.compare(password, user.password)) {
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET);
-    res.json({ token, user: { id: user.id, username, theta: user.theta } });
+    const token = jwt.sign({ userId: user._id.toString() }, JWT_SECRET);
+    res.json({ token, user: { id: user._id.toString(), username, theta: user.theta } });
   } else {
     res.status(401).json({ error: 'Invalid credentials' });
   }
@@ -44,15 +58,15 @@ app.get('/api/next-question', async (req, res) => {
 
   try {
     const { userId } = jwt.verify(token, JWT_SECRET) || {};
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const questions = await prisma.question.findMany();
-    const responses = await prisma.response.findMany({ where: { userId } });
+    const questions = await QuestionModel.find().lean();
+    const responses = await ResponseModel.find({ user: userId }).lean();
 
     const now = new Date();
     const dueQuestions = questions.filter(q => {
-      const resp = responses.find(r => r.questionId === q.id);
+      const resp = responses.find(r => r.question && r.question.toString() === q._id.toString());
       return !resp || new Date(resp.nextReview) <= now;
     });
 
@@ -62,8 +76,8 @@ app.get('/api/next-question', async (req, res) => {
 
     // Simple IRT: pick question with difficulty closest to user's theta
     const best = dueQuestions.reduce((best, q) => {
-      const diff = Math.abs(q.difficulty - user.theta);
-      const bestDiff = Math.abs(best.difficulty - user.theta);
+      const diff = Math.abs((q.difficulty || 0) - user.theta);
+      const bestDiff = Math.abs((best.difficulty || 0) - user.theta);
       return diff < bestDiff ? q : best;
     });
 
@@ -80,42 +94,30 @@ app.post('/api/submit', async (req, res) => {
 
   try {
     const { userId } = jwt.verify(token, JWT_SECRET) || {};
-    const question = await prisma.question.findUnique({ where: { id: questionId } });
+    const question = await QuestionModel.findById(questionId);
     if (!question) return res.status(404).json({ error: 'Question not found' });
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Spaced repetition interval
     let interval = 1;
-    const last = await prisma.response.findFirst({
-      where: { userId, questionId },
-      orderBy: { timestamp: 'desc' }
-    });
+    const last = await ResponseModel.findOne({ user: userId, question: questionId }).sort({ timestamp: -1 });
     if (last && last.correct) {
       const daysSince = (Date.now() - new Date(last.timestamp).getTime()) / 86400000;
       interval = Math.max(1, daysSince * 2);
     }
 
     const nextReview = new Date(Date.now() + interval * 24 * 60 * 60 * 1000);
-    await prisma.response.create({
-      data: {
-        userId,
-        questionId,
-        correct,
-        nextReview
-      }
-    });
+    await ResponseModel.create({ user: userId, question: questionId, correct, nextReview });
 
     // Update user ability (simple Elo-like)
     const k = 0.5;
-    const expected = 1 / (1 + Math.exp(-(user.theta - question.difficulty)));
-    const newTheta = user.theta + k * ((correct ? 1 : 0) - expected);
+    const expected = 1 / (1 + Math.exp(-((user.theta || 0) - (question.difficulty || 0))));
+    const newTheta = (user.theta || 0) + k * ((correct ? 1 : 0) - expected);
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { theta: newTheta }
-    });
+    user.theta = newTheta;
+    await user.save();
 
     res.json({ newTheta, correct, nextReview });
   } catch (e) {
@@ -133,11 +135,96 @@ app.get('/api/seed', async (req, res) => {
     { text: "E = mc² author?", answer: "Einstein", difficulty: 1.5 },
   ];
 
-  await prisma.question.createMany({ data: questions, skipDuplicates: true });
+  // insert questions into Mongo
+  try{
+    const inserted = await QuestionModel.insertMany(questions, { ordered: false });
+  }catch(e){ /* ignore duplicates or insertion errors for seed */ }
+
+  // create sample modules in Mongo if not exists
+  const existingModules = await ModuleModel.find();
+  if (existingModules.length === 0) {
+    const allQuestions = await QuestionModel.find();
+
+    await ModuleModel.create({ title: 'Foundations: Numbers & Facts', skill: 'reading', level: 1, description: 'Basic facts and short passages.', items: [
+      { title: 'Simple arithmetic', questionId: allQuestions[0]?._id, difficulty: allQuestions[0]?.difficulty || 0 },
+      { title: 'World capitals', questionId: allQuestions[1]?._id, difficulty: allQuestions[1]?.difficulty || 0 }
+    ]});
+
+    await ModuleModel.create({ title: 'Intermediate: Math & Logic', skill: 'reading', level: 2, description: 'Short problem solving passages.', items: [
+      { title: 'Multiplication', questionId: allQuestions[2]?._id, difficulty: allQuestions[2]?.difficulty || 0 },
+      { title: 'Calculus basics', questionId: allQuestions[3]?._id, difficulty: allQuestions[3]?.difficulty || 0 },
+      { title: 'Famous scientists', questionId: allQuestions[4]?._id, difficulty: allQuestions[4]?.difficulty || 0 }
+    ]});
+  }
+
   res.json({ success: true });
+});
+
+
+// Map theta to approximate level
+function thetaToLevel(theta) {
+  if (theta < -1) return 0;
+  if (theta < 0) return 1;
+  if (theta < 1) return 2;
+  if (theta < 2) return 3;
+  return 4;
+}
+
+// Return personalized learning path (list of modules prioritized)
+app.get('/api/learning-path', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // load modules from Mongo
+    const modules = await ModuleModel.find().lean();
+    const targetLevel = thetaToLevel(user.theta);
+    modules.sort((a, b) => Math.abs(a.level - targetLevel) - Math.abs(b.level - targetLevel));
+    res.json({ modules, suggestedLevel: targetLevel, theta: user.theta });
+  } catch (e) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// Get module details (items with question content)
+app.get('/api/module/:id', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    jwt.verify(token, JWT_SECRET);
+    const id = req.params.id;
+    const module = await ModuleModel.findById(id).lean();
+    if (!module) return res.status(404).json({ error: 'Module not found' });
+
+    // populate questions for items using Mongoose
+    const items = await Promise.all((module.items || []).map(async it => {
+      const q = it.questionId ? await QuestionModel.findById(it.questionId).lean() : null;
+      return { ...it, question: q };
+    }));
+
+    module.items = items;
+    res.json(module);
+  } catch (e) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
 });
 
 app.listen(4000, () => {
   console.log('Server running on http://localhost:4000');
   console.log('Seed questions: GET /api/seed');
+});
+
+// Create a new module (admin/content-author)
+app.post('/api/module', async (req, res) => {
+  try {
+    // in a production system we'd check RBAC and roles; for now accept and create
+    const data = req.body;
+    const created = await ModuleModel.create(data);
+    res.json(created);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to create module', details: e.message });
+  }
 });
