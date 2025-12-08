@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Target, BookOpen, BarChart2, Zap, Globe2, Trophy } from 'lucide-react';
 // SVG illustrations (inline for demo)
 const HeroSVG = () => (
   <svg width="320" height="220" viewBox="0 0 320 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginBottom: 24}}>
-    <ellipse cx="160" cy="110" rx="150" ry="90" fill="#e0e7ff" />
-    <rect x="80" y="60" width="160" height="100" rx="20" fill="#667eea" />
-    <text x="160" y="120" textAnchor="middle" fontSize="32" fill="white" fontFamily="Segoe UI">Learn English</text>
+    <text x="160" y="120" textAnchor="middle" fontSize="32" fill="white" fontFamily="Segoe UI" fontWeight="bold">Learn English</text>
   </svg>
 );
 
@@ -70,7 +69,8 @@ const features = [
   }
 ];
 
-export default function Landing({ onGetStarted }) {
+export default function Landing() {
+  const navigate = useNavigate();
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
@@ -85,17 +85,20 @@ export default function Landing({ onGetStarted }) {
     {
       title: 'Learn at Your Own Pace',
       subtitle: 'Adaptive questions that grow with you',
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      backgroundImage: 'https://images.unsplash.com/photo-1516321318423-f06f70259b51?auto=format&fit=crop&w=1200&q=80'
     },
     {
       title: 'Master English Vocabulary',
       subtitle: 'Never forget what you\'ve learned',
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      backgroundImage: 'https://images.unsplash.com/photo-1507842072343-583f20270319?auto=format&fit=crop&w=1200&q=80'
     },
     {
       title: 'Track Your Progress',
       subtitle: 'See measurable improvement every day',
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      backgroundImage: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80'
     }
   ];
 
@@ -113,23 +116,39 @@ export default function Landing({ onGetStarted }) {
             <a href="#testimonials">Testimonials</a>
             <a href="#about">About</a>
           </nav>
-          <button className="nav-cta" onClick={onGetStarted}>Sign In</button>
+          <button className="nav-cta" onClick={() => navigate('/login')}>Sign In</button>
         </div>
       </header>
 
       {/* Hero Carousel with SVG and photo */}
-      <section className="hero-carousel" style={{position: 'relative'}}>
-        <img src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80" alt="Students" style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover',opacity:0.18,zIndex:0}} />
+      <section className="hero-carousel">
         <div 
           className="carousel-slide"
-          style={{ background: carouselSlides[carouselIndex].gradient, position:'relative', zIndex:1 }}
+          style={{ 
+            backgroundImage: `url('${carouselSlides[carouselIndex].backgroundImage}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
         >
+          {/* Gradient Overlay */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%)',
+            zIndex: 1
+          }}></div>
+
           <div className="carousel-content">
             <HeroSVG />
             <h1 style={{fontWeight:800,letterSpacing:'-2px'}}>{carouselSlides[carouselIndex].title}</h1>
             <p style={{fontSize:22,marginBottom:32}}>{carouselSlides[carouselIndex].subtitle}</p>
-            <button className="cta-button-large" onClick={onGetStarted}>Start Learning Now</button>
+            <button className="cta-button-large" onClick={() => navigate('/login')}>Start Learning Now</button>
           </div>
+
           <div className="carousel-indicator">
             {carouselSlides.map((_, i) => (
               <div 
@@ -217,7 +236,7 @@ export default function Landing({ onGetStarted }) {
         <div className="cta-content">
           <h2>Ready to Transform Your English?</h2>
           <p>Join thousands of learners achieving their language goals</p>
-          <button className="cta-button-xl" onClick={onGetStarted}>Get Started Free</button>
+          <button className="cta-button-xl" onClick={() => navigate('/login')}>Get Started Free</button>
         </div>
       </section>
 
