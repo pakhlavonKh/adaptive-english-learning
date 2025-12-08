@@ -3,9 +3,16 @@ import cors from 'cors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// load environment variables from server/.env if present
-dotenv.config({ path: '.env' });
+// Setup path for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables - look in parent directory (server root)
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 import { connectMongo } from './db/mongo.js';
 import ModuleModel from './models/module.js';
 import UserModel from './models/user.js';
