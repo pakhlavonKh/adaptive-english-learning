@@ -5,12 +5,14 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 // load environment variables from server/.env if present
-dotenv.config({ path: process.env.ENV_PATH || './server/.env' });
+dotenv.config({ path: '.env' });
 import { connectMongo } from './db/mongo.js';
 import ModuleModel from './models/module.js';
 import UserModel from './models/user.js';
 import QuestionModel from './models/question.js';
 import ResponseModel from './models/response.js';
+import * as analyticsService from './services/analyticsService.js';
+import * as notificationService from './services/notificationService.js';
 
 const app = express();
 // const prisma = new PrismaClient();
@@ -215,6 +217,62 @@ app.get('/api/module/:id', async (req, res) => {
 app.listen(4000, () => {
   console.log('Server running on http://localhost:4000');
   console.log('Seed questions: GET /api/seed');
+});
+
+// ===== ANALYTICS ENDPOINTS =====
+app.get('/api/analytics/user/:userId', async (req, res) => {
+  try {
+    const metrics = await analyticsService.getUserMetrics(req.params.userId);
+    res.json(metrics);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/analytics/class/:classId', async (req, res) => {
+  try {
+    const metrics = await analyticsService.getClassMetrics(req.params.classId);
+    res.json(metrics);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/analytics/progress/:userId', async (req, res) => {
+  try {
+    const report = await analyticsService.getProgressReport(req.params.userId);
+    res.json(report);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== NOTIFICATION ENDPOINTS =====
+app.get('/api/notifications/:userId', (req, res) => {
+  try {
+    const unread = notificationService.getUnreadNotifications(req.params.userId);
+    res.json({ unread });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/notifications/:userId/all', (req, res) => {
+  try {
+    const all = notificationService.getAllNotifications(req.params.userId);
+    res.json({ notifications: all });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/notifications/:userId/mark-read/:notificationId', (req, res) => {
+  try {
+    const success = notificationService.markAsRead(req.params.userId, parseInt(req.params.notificationId));
+    res.json({ success });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Create a new module (admin/content-author)
