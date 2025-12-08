@@ -1,6 +1,8 @@
 {
   "name": "english",
   "private": true,
+  "version": "1.0.0",
+  "description": "",
   "workspaces": [
     "server",
     "client"
@@ -10,5 +12,9 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pakhlavonKh/adaptive-english-learning.git"
   }
 }
