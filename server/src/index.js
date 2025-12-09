@@ -54,7 +54,18 @@ app.post('/api/login', async (req, res) => {
   const user = await UserModel.findOne({ username });
   if (user && await bcrypt.compare(password, user.password)) {
     const token = jwt.sign({ userId: user._id.toString() }, JWT_SECRET);
-    res.json({ token, user: { id: user._id.toString(), username, theta: user.theta } });
+    res.json({ 
+      token, 
+      user: { 
+        id: user._id.toString(), 
+        username, 
+        theta: user.theta,
+        role: user.role || 'student',
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      } 
+    });
   } else {
     res.status(401).json({ error: 'Invalid credentials' });
   }
@@ -277,6 +288,129 @@ app.post('/api/notifications/:userId/mark-read/:notificationId', (req, res) => {
   try {
     const success = notificationService.markAsRead(req.params.userId, parseInt(req.params.notificationId));
     res.json({ success });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get user profile
+app.get('/api/profile', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const user = await UserModel.findById(userId).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Update user profile
+app.put('/api/profile', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { email, firstName, lastName } = req.body;
+    
+    const user = await UserModel.findByIdAndUpdate(
+      userId, 
+      { email, firstName, lastName },
+      { new: true, select: '-password' }
+    );
+    
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: Get all users
+app.get('/api/admin/users', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const admin = await UserModel.findById(userId);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const users = await UserModel.find().select('-password').lean();
+    res.json(users);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: Update user role
+app.put('/api/admin/users/:userId/role', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const admin = await UserModel.findById(userId);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { role } = req.body;
+    if (!['student', 'teacher', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    const user = await UserModel.findByIdAndUpdate(
+      req.params.userId,
+      { role },
+      { new: true, select: '-password' }
+    );
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Teacher: Get all students
+app.get('/api/teacher/students', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const teacher = await UserModel.findById(userId);
+    if (!teacher || !['teacher', 'admin'].includes(teacher.role)) {
+      return res.status(403).json({ error: 'Teacher access required' });
+    }
+
+    const students = await UserModel.find({ role: 'student' }).select('-password').lean();
+    
+    // Get progress for each student
+    const studentsWithProgress = await Promise.all(students.map(async (student) => {
+      const responses = await ResponseModel.find({ user: student._id }).lean();
+      const totalQuestions = responses.length;
+      const correctAnswers = responses.filter(r => r.correct).length;
+      const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions * 100).toFixed(1) : 0;
+      
+      return {
+        ...student,
+        stats: {
+          totalQuestions,
+          correctAnswers,
+          accuracy: parseFloat(accuracy)
+        }
+      };
+    }));
+
+    res.json(studentsWithProgress);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

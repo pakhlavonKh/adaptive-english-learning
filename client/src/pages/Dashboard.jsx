@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getNextQuestion, submit, seed } from '../api';
-import { LogOut, BookOpen, Zap, BarChart3, ChevronRight } from 'lucide-react';
+import { LogOut, BookOpen, Zap, BarChart3, ChevronRight, User, Users, Shield } from 'lucide-react';
 import LearningPath from './LearningPath';
 
 export default function Dashboard({ token, user, onLogout }){
+  const navigate = useNavigate();
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState('');
   const [status, setStatus] = useState(null);
@@ -26,7 +28,7 @@ export default function Dashboard({ token, user, onLogout }){
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   useEffect(()=>{ load(); }, []);
 
@@ -34,7 +36,7 @@ export default function Dashboard({ token, user, onLogout }){
     e.preventDefault();
     const correct = (answer || '').trim().toLowerCase() === (question.answer || '').toLowerCase();
     try{
-      const res = await submit(token, question.id, correct);
+      const res = await submit(token, question._id || question.id, correct);
       setStatus(res.correct ? 'Correct! ✓' : 'Incorrect. Try again!');
       setAnswer('');
       setTimeout(() => load(), 1500);
@@ -52,10 +54,40 @@ export default function Dashboard({ token, user, onLogout }){
             <h1>Welcome back, <span className="gradient-text">{user?.username}</span>!</h1>
             <p className="header-subtitle">Continue your English learning journey</p>
           </div>
-          <button className="logout-btn" onClick={onLogout}>
-            <LogOut size={20} />
-            Logout
-          </button>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button 
+              className="logout-btn" 
+              onClick={() => navigate('/account')}
+              style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+            >
+              <User size={20} />
+              Account
+            </button>
+            {(user?.role === 'teacher' || user?.role === 'admin') && (
+              <button 
+                className="logout-btn" 
+                onClick={() => navigate('/teacher')}
+                style={{ background: 'rgba(79, 172, 254, 0.2)' }}
+              >
+                <Users size={20} />
+                Teacher
+              </button>
+            )}
+            {user?.role === 'admin' && (
+              <button 
+                className="logout-btn" 
+                onClick={() => navigate('/admin')}
+                style={{ background: 'rgba(240, 147, 251, 0.2)' }}
+              >
+                <Shield size={20} />
+                Admin
+              </button>
+            )}
+            <button className="logout-btn" onClick={onLogout}>
+              <LogOut size={20} />
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
