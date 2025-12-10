@@ -38,6 +38,18 @@ app.get('/api/reports/class/:classId', async (req, res) => {
     }
 });
 
+// Class Average Endpoint (FR11)
+app.get('/api/reports/class/:classId/average', async (req, res) => {
+    const classId = req.params.classId;
+    try {
+        // Call the new math function
+        const stats = await analyticsService.calculateClassAverage(classId);
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Start the Server
 app.listen(PORT, () => {
     console.log(`Server running at: http://localhost:${PORT}`);
