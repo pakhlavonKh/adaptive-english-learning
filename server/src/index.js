@@ -1,11 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
+//import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import * as notificationService from './services/notificationService.js';
 
 const app = express();
-const prisma = new PrismaClient();
+//const prisma = new PrismaClient();
 const JWT_SECRET = 'your-jwt-secret';
 
 app.use(cors({ origin: 'http://localhost:5173' }));
@@ -15,11 +16,22 @@ app.use(express.json());
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   const hashed = await bcrypt.hash(password, 10);
+  
   try {
-    const user = await prisma.user.create({
-      data: { username, password: hashed }
-    });
-    res.json({ id: user.id, username: user.username });
+    
+    const user = await UserModel.create({ username, password: hashed });
+
+    
+    const verificationToken = Math.random().toString(36).substring(7);
+    
+    const emailTarget = req.body.email || `${username}@example.com`;
+
+   
+    notificationService.sendVerificationEmail(emailTarget, verificationToken)
+      .catch(err => console.error("Email sending failed:", err));
+
+
+    res.json({ id: user._id, username: user.username });
   } catch (e) {
     res.status(400).json({ error: 'User exists' });
   }

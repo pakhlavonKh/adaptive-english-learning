@@ -1,7 +1,7 @@
 {
   "name": "adaptive-server",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.js",
     "start": "node dist/index.js",
     "build": "tsc"
   },

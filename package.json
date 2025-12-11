@@ -1,0 +1,20 @@
+{
+  "name": "english",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace client\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pakhlavonkh/adaptive-english-learning.git"
+  }
+}
