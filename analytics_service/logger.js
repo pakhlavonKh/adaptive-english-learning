@@ -1,4 +1,6 @@
 // analytics_service/logger.js
+const fs = require('fs');
+const path = require('path');
 
 class SystemLogger {
     
@@ -7,14 +9,23 @@ class SystemLogger {
      * It uses a slight delay to prove it runs in the "background".
      */
     logAccessAsync(userId, action) {
-        // Node.js'de "Fire and Forget" mantığı:
-        // We're returning to the promisse, but the calling place won't 'await' it.
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const timestamp = new Date().toISOString();
-                console.log(`[SYSTEM LOG] User: ${userId} | Action: ${action} | Time: ${timestamp}`);
-                resolve(true);
-            }, 100); // A small delay (To feel the asynchronity)
+        
+        // 1. Way of log file
+        const logFilePath = path.join(__dirname, 'security_audit.log');
+        
+        // 2. Log format (Add timestamp)
+        const timestamp = new Date().toISOString();
+        const logEntry = `[SECURITY TRAIL] Time: ${timestamp} | User: ${userId} | Action: ${action}\n`;
+
+        // 3. ASYNC WRITE (Diagram Rule: Without freezing the screen)
+        // 'appendFile' runs asynchronously, it does not block the rest of the program.
+        fs.appendFile(logFilePath, logEntry, (err) => {
+            if (err) {
+                console.error(" Logging error occurred:", err);
+            } else {
+                // Let's give the terminal information so you see it working
+                console.log(` Event logged to file: ${action}`);
+            }
         });
     }
 }
