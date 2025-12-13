@@ -1,5 +1,5 @@
 // src/app.js
-const contentBlockRoutes = require("./models/contentBlockRoutes");
+const contentBlockRoutes = require("./routes/contentBlockRoutes");
 const adaptiveRoutes = require("./routes/adaptiveRoutes");
 
 const express = require("express");

@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+const { makeKey, getCache, setCache } = require("./cache");
 const Lesson = require("../models/Lesson");
 const LessonTranslation = require("../models/LessonTranslation");
 const MediaAsset = require("../models/MediaAsset");
@@ -40,6 +42,7 @@ async function createLesson(data) {
   }
 }
 
+// ID ile lesson (FULL – translations + media)
 async function getLessonById(id) {
   const lesson = await Lesson.findById(id).lean();
   if (!lesson) return null;
@@ -50,6 +53,46 @@ async function getLessonById(id) {
   return { ...lesson, translations, mediaAssets };
 }
 
+// ✅ CACHE'Lİ LESSON CONTENT (FR20 & NFR1)
+async function getLessonContent(lessonId, languageCode = "en") {
+  const objectId = new mongoose.Types.ObjectId(lessonId);
+
+  const cacheKey = makeKey(["lessonContent", lessonId, languageCode]);
+
+  // 1️⃣ Cache kontrolü
+  const cached = getCache(cacheKey);
+  if (cached) return cached;
+
+  // 2️⃣ DB
+  const lesson = await Lesson.findById(objectId).lean();
+  if (!lesson) return null;
+
+  const translation =
+    (await LessonTranslation.findOne({
+      lesson: objectId,
+      languageCode
+    }).lean()) ||
+    (await LessonTranslation.findOne({ lesson: objectId }).lean());
+
+  const mediaAssets = await MediaAsset.find({
+    lesson: objectId,
+    languageCode
+  }).lean();
+
+  const result = {
+    ...lesson,
+    translation,
+    mediaAssets
+  };
+
+  // 3️⃣ Cache yaz
+  setCache(cacheKey, result);
+
+  return result;
+}
+
+
+// Listeleme
 async function listLessons(filter = {}) {
   const query = {};
   if (filter.topic) query.topic = filter.topic;
@@ -62,5 +105,6 @@ async function listLessons(filter = {}) {
 module.exports = {
   createLesson,
   getLessonById,
+  getLessonContent,
   listLessons
 };

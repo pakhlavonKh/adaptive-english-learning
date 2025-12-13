@@ -23,6 +23,25 @@ async function getLesson(req, res) {
   }
 }
 
+// ✅ NEW: Cache-first lesson content endpoint
+async function getLessonContent(req, res) {
+  try {
+    const { lessonId } = req.params;
+    const languageCode = req.query.languageCode || "en";
+
+    const result = await lessonService.getLessonContent(lessonId, languageCode);
+
+    if (!result) {
+      return res.status(404).json({ message: "Lesson not found" });
+    }
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("getLessonContent error:", err);
+    res.status(500).json({ message: "Error fetching lesson content" });
+  }
+}
+
 async function listLessons(req, res) {
   try {
     const { topic, level, isActive } = req.query;
@@ -43,5 +62,6 @@ async function listLessons(req, res) {
 module.exports = {
   createLesson,
   getLesson,
+  getLessonContent, // ✅ export eklendi
   listLessons
 };
