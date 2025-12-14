@@ -6,9 +6,13 @@ export default function TeacherDashboard({ token, user, onLogout }) {
   const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [report, setReport] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [analyticsError, setAnalyticsError] = useState(null);
 
   useEffect(() => {
     loadStudents();
+    loadAnalytics();
   }, []);
 
   async function loadStudents() {
@@ -22,6 +26,22 @@ export default function TeacherDashboard({ token, user, onLogout }) {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadAnalytics() {
+    try {
+      // Fetch analytics data from port 8000
+      const reportRes = await fetch('http://localhost:8000/api/reports/class/101');
+      const reportData = await reportRes.json();
+      setReport(reportData);
+
+      const statsRes = await fetch('http://localhost:8000/api/reports/class/101/average');
+      const statsData = await statsRes.json();
+      setStats(statsData);
+    } catch (err) {
+      console.error("Analytics fetch error:", err);
+      setAnalyticsError("Analytics service not available");
     }
   }
 
@@ -240,6 +260,87 @@ export default function TeacherDashboard({ token, user, onLogout }) {
           </div>
         )}
       </div>
+
+      {/* Analytics Service Section (if available) */}
+      {stats && report && (
+        <div style={{ marginTop: '40px' }}>
+          <h3 style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: '#1a1a1a',
+            marginBottom: '24px'
+          }}>
+            📊 Advanced Analytics
+          </h3>
+
+          {/* Analytics Cards */}
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#e3f2fd', border: '1px solid #bbdefb', borderRadius: '10px', padding: '20px' }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#1565c0' }}>Class Average Retention</h4>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0d47a1' }}>
+                {stats.average_retention}%
+              </div>
+            </div>
+
+            <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#f3e5f5', border: '1px solid #e1bee7', borderRadius: '10px', padding: '20px' }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#6a1b9a' }}>Analytics Student Count</h4>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#4a148c' }}>
+                {stats.student_count}
+              </div>
+            </div>
+          </div>
+
+          {/* Analytics Student Details */}
+          {report.data && report.data.length > 0 && (
+            <div style={{ backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '10px', padding: '20px' }}>
+              <h4 style={{ marginTop: 0, color: '#333', marginBottom: '16px' }}>Detailed Performance Metrics</h4>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
+                    <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Name</th>
+                    <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Level</th>
+                    <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Retention Score</th>
+                    <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Risk Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.data.map((student) => (
+                    <tr key={student.id} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '12px' }}><strong>{student.name}</strong></td>
+                      <td style={{ padding: '12px' }}>{student.level}</td>
+                      <td style={{ padding: '12px' }}>{student.retention}%</td>
+                      <td style={{ padding: '12px' }}>
+                        {student.risk ? (
+                          <span style={{ color: 'red', fontWeight: 'bold', padding: '4px 8px', background: '#fee', borderRadius: '4px' }}>
+                            ⚠️ AT RISK
+                          </span>
+                        ) : (
+                          <span style={{ color: 'green', fontWeight: 'bold', padding: '4px 8px', background: '#efe', borderRadius: '4px' }}>
+                            ✓ ON TRACK
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {analyticsError && (
+        <div style={{
+          marginTop: '20px',
+          padding: '16px',
+          background: '#fff3cd',
+          border: '1px solid #ffeaa7',
+          borderRadius: '8px',
+          color: '#856404'
+        }}>
+          ℹ️ {analyticsError} (Analytics service on port 8000 is optional)
+        </div>
+      )}
       </div>
     </div>
   );
