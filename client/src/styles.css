@@ -132,6 +132,11 @@ body {
   to { opacity: 1; }
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .carousel-content {
   max-width: 700px;
   padding: 40px;

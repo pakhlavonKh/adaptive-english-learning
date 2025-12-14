@@ -20,6 +20,7 @@ import QuestionModel from './models/question.js';
 import ResponseModel from './models/response.js';
 import * as analyticsService from './services/analyticsService.js';
 import * as notificationService from './services/notificationService.js';
+import * as pathGenerationService from './services/pathGenerationService.js';
 
 const app = express();
 // const prisma = new PrismaClient();
@@ -425,5 +426,56 @@ app.post('/api/module', async (req, res) => {
     res.json(created);
   } catch (e) {
     res.status(500).json({ error: 'Failed to create module', details: e.message });
+  }
+});
+
+// ===== PATH GENERATION ENDPOINTS =====
+
+// Generate initial learning path for user
+app.post('/api/path/generate', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { externalScores, targetSkills } = req.body;
+
+    const path = await pathGenerationService.generateInitialPath(userId, {
+      externalScores,
+      targetSkills,
+      includeOnboarding: true
+    });
+
+    res.json(path);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Check if user needs initial path
+app.get('/api/path/needs-generation', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const needs = await pathGenerationService.needsInitialPath(userId);
+    res.json({ needsGeneration: needs });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Regenerate path based on performance
+app.post('/api/path/regenerate', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const path = await pathGenerationService.regeneratePath(userId);
+    res.json(path);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });

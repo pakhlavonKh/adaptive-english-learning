@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNextQuestion, submit, seed } from '../api';
+import { getNextQuestion, submit, seed, checkNeedsGeneration } from '../api';
 import { LogOut, BookOpen, Zap, BarChart3, ChevronRight, User, Users, Shield } from 'lucide-react';
 import LearningPath from './LearningPath';
+import InitialPathGenerator from '../components/InitialPathGenerator';
 
 export default function Dashboard({ token, user, onLogout }){
   const navigate = useNavigate();
@@ -11,6 +12,28 @@ export default function Dashboard({ token, user, onLogout }){
   const [status, setStatus] = useState(null);
   const [showPath, setShowPath] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [needsPathGeneration, setNeedsPathGeneration] = useState(false);
+  const [generatedPath, setGeneratedPath] = useState(null);
+  const [checkingPath, setCheckingPath] = useState(true);
+
+  const checkInitialPath = async () => {
+    try {
+      setCheckingPath(true);
+      const result = await checkNeedsGeneration(token);
+      setNeedsPathGeneration(result.needsGeneration);
+      
+      // If user doesn't need path generation, load questions normally
+      if (!result.needsGeneration) {
+        await load();
+      }
+    } catch (e) {
+      console.error('Failed to check path generation:', e);
+      setNeedsPathGeneration(false);
+      await load();
+    } finally {
+      setCheckingPath(false);
+    }
+  };
 
   const load = async () => {
     try{
@@ -30,7 +53,9 @@ export default function Dashboard({ token, user, onLogout }){
     }
   };
 
-  useEffect(()=>{ load(); }, []);
+  useEffect(()=>{ 
+    checkInitialPath(); 
+  }, []);
 
   const handleSubmit = async (e) =>{
     e.preventDefault();
@@ -43,6 +68,52 @@ export default function Dashboard({ token, user, onLogout }){
     }catch(e){
       setStatus(e.response?.data?.error || 'Submit failed');
     }
+  }
+
+  const handlePathGenerated = (path) => {
+    setGeneratedPath(path);
+    setNeedsPathGeneration(false);
+    setShowPath(true);
+    // Load first question after path generation
+    load();
+  };
+
+  // Show loading state while checking
+  if (checkingPath) {
+    return (
+      <div className="dashboard-container">
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #667eea',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <p style={{ color: '#666', fontSize: '16px' }}>Setting up your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show path generator for new users
+  if (needsPathGeneration) {
+    return (
+      <div className="dashboard-container">
+        <InitialPathGenerator 
+          token={token} 
+          onComplete={handlePathGenerated}
+        />
+      </div>
+    );
   }
 
   return (
