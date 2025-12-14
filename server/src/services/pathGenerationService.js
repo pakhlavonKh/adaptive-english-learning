@@ -98,6 +98,11 @@ export async function generateInitialPath(userId, options = {}) {
   // Load all modules
   const modules = await ModuleModel.find().lean();
   
+  // Check if modules exist
+  if (modules.length === 0) {
+    throw new Error('No learning modules found. Please seed the database by visiting /api/seed');
+  }
+  
   // Generate recommendations by skill
   const pathBySkill = {};
   for (const skill of targetSkills) {
