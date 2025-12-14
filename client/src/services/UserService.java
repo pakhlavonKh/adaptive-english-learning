@@ -4,6 +4,7 @@ import infrastructure.Database;
 import infrastructure.EmailSystem;
 import infrastructure.IExternalDataGateway;
 import models.Student;
+import models.Role; // <--- This was missing!
 import java.util.UUID;
 
 public class UserService {
@@ -11,14 +12,12 @@ public class UserService {
     private EmailSystem emailSystem;
     private IExternalDataGateway externalGateway;
 
-    // Constructor Injection: This allows you to pass the Real DB or a Test DB easily
     public UserService(Database db, EmailSystem emailSystem, IExternalDataGateway gateway) {
         this.db = db;
         this.emailSystem = emailSystem;
         this.externalGateway = gateway;
     }
 
-    // UC1: Registration Logic
     public boolean registerUser(String username, String email, String password) {
         if (db.emailExists(email)) {
             System.out.println("Error: Account already exists."); 
@@ -28,7 +27,7 @@ public class UserService {
         Student newStudent = new Student(username, email, password);
         newStudent.studentId = UUID.randomUUID().toString(); 
         
-        db.saveUser(newStudent); // Saves to the "Remote DB" (via Infrastructure class)
+        db.saveUser(newStudent);
 
         String token = UUID.randomUUID().toString();
         emailSystem.sendVerification(email, token);
@@ -36,15 +35,13 @@ public class UserService {
         return true;
     }
 
-    // UC1: Verification & Data Sync
     public boolean activateAccount(String token) {
-        boolean tokenValid = true; // Logic to check token validity would go here
+        boolean tokenValid = true; 
 
         if (tokenValid) {
-            String userId = "mock-student-id"; // In real app, extract ID from token
+            String userId = "mock-student-id"; 
             db.updateUserStatus(userId, "ACTIVE");
 
-            // Sync legacy scores immediately upon activation
             String scores = externalGateway.fetchStudentScores(userId);
             db.saveProficiencyProfile(userId, scores);
             
@@ -53,32 +50,40 @@ public class UserService {
         return false;
     }
 
-    // Logic from UC3: Receive Personalized Learning Path [cite: 102]
     public boolean checkProficiencyData(String studentId) {
         System.out.println("[UserService] Checking proficiency profile for: " + studentId);
-        
-        // 1. Check if we already have the profile locally
-        // (In a real app, this would query the DB for the profile string)
-        String existingProfile = null; // Simulating "Data Missing" 
+        String existingProfile = null; 
 
-        // 2. The "alt" block from Figure 3 
         if (existingProfile == null) {
             System.out.println("[Logic] Proficiency Data Missing. Fetching from External Gateway...");
-            
-            // Call the External Gateway
             String scores = externalGateway.fetchStudentScores(studentId);
             
             if (scores != null) {
-                // Save it to our database
                 db.saveProficiencyProfile(studentId, scores);
-                return true; // Data Valid & Acquired [cite: 123]
+                return true; 
             } else {
-                System.out.println("[Error] Data Sync Failed."); // [cite: 115]
+                System.out.println("[Error] Data Sync Failed."); 
                 return false;
             }
         } else {
             System.out.println("[Logic] Proficiency Data found locally.");
             return true;
+        }
+    }
+
+    // New Feature: Login (FR2)
+    public Student login(String email, String password) {
+        return db.findUserByEmail(email); 
+    }
+
+    // New Feature: Manage Roles (FR3)
+    public void assignRole(String email, Role newRole) {
+        Student user = db.findUserByEmail(email);
+        if (user != null) {
+            user.role = newRole;
+            System.out.println("[RBAC] User " + user.username + " promoted to " + newRole);
+        } else {
+            System.out.println("[RBAC] Error: User not found.");
         }
     }
 }
