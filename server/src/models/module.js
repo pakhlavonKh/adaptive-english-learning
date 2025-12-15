@@ -5,7 +5,7 @@ const ItemSchema = new mongoose.Schema({
   type: { type: String, default: 'objective' },
   difficulty: { type: Number, default: 0 },
   discrimination: { type: Number, default: 1 },
-  questionId: { type: Number }
+  questionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Question' }
 }, { _id: false });
 
 const ModuleSchema = new mongoose.Schema({

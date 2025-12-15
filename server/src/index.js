@@ -26,9 +26,119 @@ const app = express();
 // const prisma = new PrismaClient();
 const MONGODB_URI = process.env.MONGODB_URI || '';
 
+// Seed function
+async function seedDatabase() {
+  const questions = [
+    { text: "2 + 2 = ?", answer: "4", difficulty: -2 },
+    { text: "Capital of Japan?", answer: "Tokyo", difficulty: -1 },
+    { text: "What is 12 × 11?", answer: "132", difficulty: 0.5 },
+    { text: "Derivative of x²?", answer: "2x", difficulty: 1 },
+    { text: "E = mc² author?", answer: "Einstein", difficulty: 1.5 },
+  ];
+
+  try {
+    await QuestionModel.insertMany(questions, { ordered: false });
+  } catch (e) { /* ignore duplicates */ }
+
+  const allQuestions = await QuestionModel.find();
+
+  // Create sample modules
+  await ModuleModel.create([
+    { 
+      title: 'Foundations: Numbers & Facts', 
+      skill: 'reading', 
+      level: 1, 
+      description: 'Basic facts and short passages.', 
+      items: [
+        { title: 'Simple arithmetic', questionId: allQuestions[0]?._id, difficulty: -2 },
+        { title: 'World capitals', questionId: allQuestions[1]?._id, difficulty: -1 }
+      ]
+    },
+    { 
+      title: 'Intermediate: Math & Logic', 
+      skill: 'reading', 
+      level: 2, 
+      description: 'Short problem solving passages.', 
+      items: [
+        { title: 'Multiplication', questionId: allQuestions[2]?._id, difficulty: 0.5 },
+        { title: 'Calculus basics', questionId: allQuestions[3]?._id, difficulty: 1 }
+      ]
+    },
+    { 
+      title: 'Basic Grammar', 
+      skill: 'writing', 
+      level: 1, 
+      description: 'Essential grammar rules and sentence structure.', 
+      items: [
+        { title: 'Simple sentences', difficulty: -1.5 },
+        { title: 'Basic verb tenses', difficulty: -1 }
+      ]
+    },
+    { 
+      title: 'Paragraph Writing', 
+      skill: 'writing', 
+      level: 2, 
+      description: 'Learn to write coherent paragraphs.', 
+      items: [
+        { title: 'Topic sentences', difficulty: 0 },
+        { title: 'Supporting details', difficulty: 0.5 }
+      ]
+    },
+    { 
+      title: 'Basic Listening', 
+      skill: 'listening', 
+      level: 1, 
+      description: 'Understanding simple spoken English.', 
+      items: [
+        { title: 'Greetings and introductions', difficulty: -1.5 },
+        { title: 'Simple questions', difficulty: -1 }
+      ]
+    },
+    { 
+      title: 'Conversation Comprehension', 
+      skill: 'listening', 
+      level: 2, 
+      description: 'Understanding everyday conversations.', 
+      items: [
+        { title: 'Short dialogues', difficulty: 0 },
+        { title: 'Common phrases', difficulty: 0.5 }
+      ]
+    },
+    { 
+      title: 'Pronunciation Basics', 
+      skill: 'speaking', 
+      level: 1, 
+      description: 'Learn correct pronunciation of common words.', 
+      items: [
+        { title: 'Vowel sounds', difficulty: -1.5 },
+        { title: 'Consonant sounds', difficulty: -1 }
+      ]
+    },
+    { 
+      title: 'Speaking Practice', 
+      skill: 'speaking', 
+      level: 2, 
+      description: 'Practice speaking in common situations.', 
+      items: [
+        { title: 'Asking for directions', difficulty: 0 },
+        { title: 'Ordering food', difficulty: 0.5 }
+      ]
+    }
+  ]);
+
+  console.log('✓ Database seeded with 8 modules');
+}
+
 // connect to MongoDB (non-blocking)
-connectMongo(MONGODB_URI).then(()=>{
+connectMongo(MONGODB_URI).then(async ()=>{
   console.log('Connected to MongoDB');
+  
+  // Auto-seed if no modules exist
+  const moduleCount = await ModuleModel.countDocuments();
+  if (moduleCount === 0) {
+    console.log('No modules found - auto-seeding database...');
+    await seedDatabase();
+  }
 }).catch(err => {
   console.warn('MongoDB not connected:', err.message);
 });
@@ -526,7 +636,8 @@ app.post('/api/path/generate', async (req, res) => {
 
     res.json(path);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('Path generation error:', e);
+    res.status(500).json({ error: e.message, stack: e.stack });
   }
 });
 

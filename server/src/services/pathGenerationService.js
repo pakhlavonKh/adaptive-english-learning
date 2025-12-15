@@ -100,7 +100,7 @@ export async function generateInitialPath(userId, options = {}) {
   
   // Check if modules exist
   if (modules.length === 0) {
-    throw new Error('No learning modules found. Please seed the database by visiting /api/seed');
+    throw new Error('No learning modules found in database. Please visit http://localhost:4000/api/seed to initialize the database, then try again.');
   }
   
   // Generate recommendations by skill
