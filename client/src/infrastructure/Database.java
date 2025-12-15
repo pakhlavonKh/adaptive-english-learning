@@ -1,27 +1,41 @@
 package infrastructure;
 
 import models.Student;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Database {
-    // In the future, you will add: private Connection connection; here
+    // This List acts as your "RAM Memory" Database
+    private List<Student> users = new ArrayList<>();
 
     public boolean emailExists(String email) {
-        // TODO: Replace with "SELECT count(*) FROM users WHERE email = ?"
+        for (Student s : users) {
+            if (s.email.equalsIgnoreCase(email)) {
+                return true; 
+            }
+        }
         return false; 
     }
 
     public void saveUser(Student student) {
-        // TODO: Replace with "INSERT INTO users (username, email...) VALUES (...)"
-        System.out.println("[Database] Saving user to Remote DB: " + student.username);
+        users.add(student); // Saves to our List
+        System.out.println("[Database] User saved to Remote DB: " + student.username);
+    }
+
+    public Student findUserByEmail(String email) {
+        for (Student s : users) {
+            if (s.email.equalsIgnoreCase(email)) {
+                return s;
+            }
+        }
+        return null;
     }
 
     public void updateUserStatus(String studentId, String status) {
-        // TODO: Replace with "UPDATE users SET status = ? WHERE id = ?"
         System.out.println("[Database] Updating status for " + studentId + " to " + status);
     }
 
     public void saveProficiencyProfile(String studentId, String scores) {
-        // TODO: Replace with SQL Update
         System.out.println("[Database] Persisting proficiency scores for " + studentId);
     }
 }
