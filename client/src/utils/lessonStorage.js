@@ -1,16 +1,25 @@
-// client/src/utils/lessonStorage.js
-
 const STORAGE_KEY = "offline_lessons";
 
-export function saveLessonOffline(lesson) {
+// Save a module/lesson offline keyed by (id + languageCode)
+export function saveLessonOffline(id, languageCode = "en", data = null) {
   const existing = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  existing[lesson._id] = lesson;
+  const key = `${id}:${languageCode}`;
+
+  existing[key] = {
+    id,
+    languageCode,
+    savedAt: new Date().toISOString(),
+    data // optional payload (you can store fetched content here later)
+  };
+
   localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+  return existing[key];
 }
 
-export function getOfflineLesson(lessonId) {
+export function getOfflineLesson(id, languageCode = "en") {
   const existing = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  return existing[lessonId] || null;
+  const key = `${id}:${languageCode}`;
+  return existing[key] || null;
 }
 
 export function getAllOfflineLessons() {

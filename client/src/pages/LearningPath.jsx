@@ -9,15 +9,30 @@ export default function LearningPath({ token }) {
   const [loading, setLoading] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
 
+  // ✅ Per-user language setting (stored on device)
+  const [languageCode, setLanguageCode] = useState(
+    localStorage.getItem("languageCode") || "en"
+  );
+
   useEffect(() => {
-    loadPath();
+    localStorage.setItem("languageCode", languageCode);
+    // Dil değişince learning path’i yeniden çekelim
+    loadPath(languageCode);
+    // açık modül varsa kapatalım (istersen kaldırabilirsin)
+    setModuleContent(null);
+    setActiveModule(null);
+  }, [languageCode]);
+
+  useEffect(() => {
+    loadPath(languageCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadPath() {
+  async function loadPath(lang = languageCode) {
     setLoading(true);
     setSavedMsg("");
     try {
-      const data = await getLearningPath(token);
+      const data = await getLearningPath(token, lang);
       setPath(data);
     } catch (e) {
       console.error(e);
@@ -32,7 +47,7 @@ export default function LearningPath({ token }) {
     setLoading(true);
     setSavedMsg("");
     try {
-      const mod = await getModule(token, m.id);
+      const mod = await getModule(token, m.id, languageCode);
       setModuleContent(mod);
     } catch (e) {
       console.error(e);
@@ -45,8 +60,10 @@ export default function LearningPath({ token }) {
   async function downloadModule(m) {
     setSavedMsg("");
     try {
-      await saveLessonOffline(m.id, "en");
-      setSavedMsg(`✅ Lesson saved for offline use: ${m.title}`);
+      await saveLessonOffline(m.id, languageCode);
+      setSavedMsg(
+        `✅ Lesson saved for offline use (${languageCode}): ${m.title}`
+      );
     } catch (e) {
       console.error(e);
       setSavedMsg("❌ Failed to save lesson offline.");
@@ -58,6 +75,23 @@ export default function LearningPath({ token }) {
 
   return (
     <div>
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <label htmlFor="lang" style={{ fontWeight: 600 }}>
+            Language:
+          </label>
+          <select
+            id="lang"
+            value={languageCode}
+            onChange={(e) => setLanguageCode(e.target.value)}
+          >
+            <option value="en">English</option>
+            <option value="tr">Turkish</option>
+          </select>
+          <span style={{ opacity: 0.7 }}>(saved per user/device)</span>
+        </div>
+      </div>
+
       <div className="card">
         <h3>
           Suggested level: {path.suggestedLevel} — theta:{" "}
@@ -72,9 +106,7 @@ export default function LearningPath({ token }) {
             <li key={m.id} style={{ margin: "8px 0" }}>
               <strong>{m.title}</strong> — {m.skill} (level {m.level})
               <div style={{ marginTop: 6 }}>
-                <button onClick={() => openModule(m)}>
-                  Open Module
-                </button>
+                <button onClick={() => openModule(m)}>Open Module</button>
 
                 <button
                   onClick={() => downloadModule(m)}
