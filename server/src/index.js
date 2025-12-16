@@ -18,9 +18,11 @@ import ModuleModel from './models/module.js';
 import UserModel from './models/user.js';
 import QuestionModel from './models/question.js';
 import ResponseModel from './models/response.js';
+import TrainingDataModel from './models/trainingData.js';
 import * as analyticsService from './services/analyticsService.js';
 import * as notificationService from './services/notificationService.js';
 import * as pathGenerationService from './services/pathGenerationService.js';
+import * as dataCollectionService from './services/dataCollectionService.js';
 
 const app = express();
 // const prisma = new PrismaClient();
@@ -665,6 +667,200 @@ app.post('/api/path/regenerate', async (req, res) => {
     const path = await pathGenerationService.regeneratePath(userId);
     res.json(path);
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== DATA COLLECTION ENDPOINTS (UC18: Training Data Collection) =====
+
+// Record any interaction for training data
+app.post('/api/training-data/record', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const interactionData = { ...req.body, userId };
+    
+    const result = await dataCollectionService.recordInteraction(interactionData);
+    res.json(result);
+  } catch (e) {
+    console.error('Error recording interaction:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Record quiz answer specifically
+app.post('/api/training-data/quiz-answer', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { questionId, answerCorrect, responseTime, additionalData } = req.body;
+    
+    const result = await dataCollectionService.recordQuizAnswer(
+      userId, 
+      questionId, 
+      answerCorrect, 
+      responseTime, 
+      additionalData
+    );
+    res.json(result);
+  } catch (e) {
+    console.error('Error recording quiz answer:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Record click interaction
+app.post('/api/training-data/click', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { elementClicked, pageUrl, timeSpent } = req.body;
+    
+    const result = await dataCollectionService.recordClick(userId, elementClicked, pageUrl, timeSpent);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Record page view
+app.post('/api/training-data/page-view', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { pageUrl, previousPage, timeSpent } = req.body;
+    
+    const result = await dataCollectionService.recordPageView(userId, pageUrl, previousPage, timeSpent);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Record module start
+app.post('/api/training-data/module-start', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { moduleId, moduleLevel, moduleSkill } = req.body;
+    
+    const result = await dataCollectionService.recordModuleStart(userId, moduleId, moduleLevel, moduleSkill);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Record module completion
+app.post('/api/training-data/module-complete', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { moduleId, moduleLevel, moduleSkill, timeSpent } = req.body;
+    
+    const result = await dataCollectionService.recordModuleComplete(userId, moduleId, moduleLevel, moduleSkill, timeSpent);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Record session (start/end)
+app.post('/api/training-data/session', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const { type, sessionDuration } = req.body;
+    
+    const result = await dataCollectionService.recordSession(userId, type, sessionDuration);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get training data (admin only)
+app.get('/api/training-data/export', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const user = await UserModel.findById(userId);
+    
+    // Check if user is admin
+    if (user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { startDate, endDate, interactionType, limit, skip } = req.query;
+    const filters = { startDate, endDate, interactionType, limit, skip };
+    
+    const data = await dataCollectionService.getTrainingData(filters);
+    res.json({ success: true, count: data.length, data });
+  } catch (e) {
+    console.error('Error exporting training data:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get training data statistics (admin only)
+app.get('/api/training-data/stats', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const user = await UserModel.findById(userId);
+    
+    // Check if user is admin
+    if (user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const stats = await dataCollectionService.getTrainingDataStats();
+    res.json(stats);
+  } catch (e) {
+    console.error('Error fetching training data stats:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Export training data in batches (admin only)
+app.get('/api/training-data/batch/:batchNumber', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const user = await UserModel.findById(userId);
+    
+    // Check if user is admin
+    if (user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const batchNumber = parseInt(req.params.batchNumber) || 0;
+    const batchSize = parseInt(req.query.batchSize) || 10000;
+    
+    const batch = await dataCollectionService.exportTrainingDataBatch(batchSize, batchNumber);
+    res.json(batch);
+  } catch (e) {
+    console.error('Error exporting batch:', e);
     res.status(500).json({ error: e.message });
   }
 });
