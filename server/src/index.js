@@ -28,119 +28,10 @@ const app = express();
 // const prisma = new PrismaClient();
 const MONGODB_URI = process.env.MONGODB_URI || '';
 
-// Seed function
-async function seedDatabase() {
-  const questions = [
-    { text: "2 + 2 = ?", answer: "4", difficulty: -2 },
-    { text: "Capital of Japan?", answer: "Tokyo", difficulty: -1 },
-    { text: "What is 12 × 11?", answer: "132", difficulty: 0.5 },
-    { text: "Derivative of x²?", answer: "2x", difficulty: 1 },
-    { text: "E = mc² author?", answer: "Einstein", difficulty: 1.5 },
-  ];
-
-  try {
-    await QuestionModel.insertMany(questions, { ordered: false });
-  } catch (e) { /* ignore duplicates */ }
-
-  const allQuestions = await QuestionModel.find();
-
-  // Create sample modules
-  await ModuleModel.create([
-    { 
-      title: 'Foundations: Numbers & Facts', 
-      skill: 'reading', 
-      level: 1, 
-      description: 'Basic facts and short passages.', 
-      items: [
-        { title: 'Simple arithmetic', questionId: allQuestions[0]?._id, difficulty: -2 },
-        { title: 'World capitals', questionId: allQuestions[1]?._id, difficulty: -1 }
-      ]
-    },
-    { 
-      title: 'Intermediate: Math & Logic', 
-      skill: 'reading', 
-      level: 2, 
-      description: 'Short problem solving passages.', 
-      items: [
-        { title: 'Multiplication', questionId: allQuestions[2]?._id, difficulty: 0.5 },
-        { title: 'Calculus basics', questionId: allQuestions[3]?._id, difficulty: 1 }
-      ]
-    },
-    { 
-      title: 'Basic Grammar', 
-      skill: 'writing', 
-      level: 1, 
-      description: 'Essential grammar rules and sentence structure.', 
-      items: [
-        { title: 'Simple sentences', difficulty: -1.5 },
-        { title: 'Basic verb tenses', difficulty: -1 }
-      ]
-    },
-    { 
-      title: 'Paragraph Writing', 
-      skill: 'writing', 
-      level: 2, 
-      description: 'Learn to write coherent paragraphs.', 
-      items: [
-        { title: 'Topic sentences', difficulty: 0 },
-        { title: 'Supporting details', difficulty: 0.5 }
-      ]
-    },
-    { 
-      title: 'Basic Listening', 
-      skill: 'listening', 
-      level: 1, 
-      description: 'Understanding simple spoken English.', 
-      items: [
-        { title: 'Greetings and introductions', difficulty: -1.5 },
-        { title: 'Simple questions', difficulty: -1 }
-      ]
-    },
-    { 
-      title: 'Conversation Comprehension', 
-      skill: 'listening', 
-      level: 2, 
-      description: 'Understanding everyday conversations.', 
-      items: [
-        { title: 'Short dialogues', difficulty: 0 },
-        { title: 'Common phrases', difficulty: 0.5 }
-      ]
-    },
-    { 
-      title: 'Pronunciation Basics', 
-      skill: 'speaking', 
-      level: 1, 
-      description: 'Learn correct pronunciation of common words.', 
-      items: [
-        { title: 'Vowel sounds', difficulty: -1.5 },
-        { title: 'Consonant sounds', difficulty: -1 }
-      ]
-    },
-    { 
-      title: 'Speaking Practice', 
-      skill: 'speaking', 
-      level: 2, 
-      description: 'Practice speaking in common situations.', 
-      items: [
-        { title: 'Asking for directions', difficulty: 0 },
-        { title: 'Ordering food', difficulty: 0.5 }
-      ]
-    }
-  ]);
-
-  console.log('✓ Database seeded with 8 modules');
-}
-
 // connect to MongoDB (non-blocking)
 connectMongo(MONGODB_URI).then(async ()=>{
-  console.log('Connected to MongoDB');
-  
-  // Auto-seed if no modules exist
-  const moduleCount = await ModuleModel.countDocuments();
-  if (moduleCount === 0) {
-    console.log('No modules found - auto-seeding database...');
-    await seedDatabase();
-  }
+  console.log('✓ Connected to MongoDB');
+  console.log('✓ Use "npm run seed" to populate the database with content');
 }).catch(err => {
   console.warn('MongoDB not connected:', err.message);
 });
@@ -258,125 +149,6 @@ app.post('/api/submit', async (req, res) => {
   }
 });
 
-// Seed questions
-app.get('/api/seed', async (req, res) => {
-  const questions = [
-    { text: "2 + 2 = ?", answer: "4", difficulty: -2 },
-    { text: "Capital of Japan?", answer: "Tokyo", difficulty: -1 },
-    { text: "What is 12 × 11?", answer: "132", difficulty: 0.5 },
-    { text: "Derivative of x²?", answer: "2x", difficulty: 1 },
-    { text: "E = mc² author?", answer: "Einstein", difficulty: 1.5 },
-  ];
-
-  // insert questions into Mongo
-  try{
-    const inserted = await QuestionModel.insertMany(questions, { ordered: false });
-  }catch(e){ /* ignore duplicates or insertion errors for seed */ }
-
-  // create sample modules in Mongo if not exists
-  const existingModules = await ModuleModel.find();
-  if (existingModules.length === 0) {
-    const allQuestions = await QuestionModel.find();
-
-    // Reading modules
-    await ModuleModel.create({ 
-      title: 'Foundations: Numbers & Facts', 
-      skill: 'reading', 
-      level: 1, 
-      description: 'Basic facts and short passages.', 
-      items: [
-        { title: 'Simple arithmetic', questionId: allQuestions[0]?._id, difficulty: -2 },
-        { title: 'World capitals', questionId: allQuestions[1]?._id, difficulty: -1 }
-      ]
-    });
-
-    await ModuleModel.create({ 
-      title: 'Intermediate: Math & Logic', 
-      skill: 'reading', 
-      level: 2, 
-      description: 'Short problem solving passages.', 
-      items: [
-        { title: 'Multiplication', questionId: allQuestions[2]?._id, difficulty: 0.5 },
-        { title: 'Calculus basics', questionId: allQuestions[3]?._id, difficulty: 1 }
-      ]
-    });
-
-    // Writing modules
-    await ModuleModel.create({ 
-      title: 'Basic Grammar', 
-      skill: 'writing', 
-      level: 1, 
-      description: 'Essential grammar rules and sentence structure.', 
-      items: [
-        { title: 'Simple sentences', difficulty: -1.5 },
-        { title: 'Basic verb tenses', difficulty: -1 }
-      ]
-    });
-
-    await ModuleModel.create({ 
-      title: 'Paragraph Writing', 
-      skill: 'writing', 
-      level: 2, 
-      description: 'Learn to write coherent paragraphs.', 
-      items: [
-        { title: 'Topic sentences', difficulty: 0 },
-        { title: 'Supporting details', difficulty: 0.5 }
-      ]
-    });
-
-    // Listening modules
-    await ModuleModel.create({ 
-      title: 'Basic Listening', 
-      skill: 'listening', 
-      level: 1, 
-      description: 'Understanding simple spoken English.', 
-      items: [
-        { title: 'Greetings and introductions', difficulty: -1.5 },
-        { title: 'Simple questions', difficulty: -1 }
-      ]
-    });
-
-    await ModuleModel.create({ 
-      title: 'Conversation Comprehension', 
-      skill: 'listening', 
-      level: 2, 
-      description: 'Understanding everyday conversations.', 
-      items: [
-        { title: 'Short dialogues', difficulty: 0 },
-        { title: 'Common phrases', difficulty: 0.5 }
-      ]
-    });
-
-    // Speaking modules
-    await ModuleModel.create({ 
-      title: 'Pronunciation Basics', 
-      skill: 'speaking', 
-      level: 1, 
-      description: 'Learn correct pronunciation of common words.', 
-      items: [
-        { title: 'Vowel sounds', difficulty: -1.5 },
-        { title: 'Consonant sounds', difficulty: -1 }
-      ]
-    });
-
-    await ModuleModel.create({ 
-      title: 'Speaking Practice', 
-      skill: 'speaking', 
-      level: 2, 
-      description: 'Practice speaking in common situations.', 
-      items: [
-        { title: 'Asking for directions', difficulty: 0 },
-        { title: 'Ordering food', difficulty: 0.5 }
-      ]
-    });
-
-    console.log('✓ Created 8 sample modules across all skills');
-  }
-
-  res.json({ success: true, modules: existingModules.length === 0 ? 8 : existingModules.length });
-});
-
-
 // Map theta to approximate level
 function thetaToLevel(theta) {
   if (theta < -1) return 0;
@@ -415,15 +187,31 @@ app.get('/api/module/:id', async (req, res) => {
     const module = await ModuleModel.findById(id).lean();
     if (!module) return res.status(404).json({ error: 'Module not found' });
 
-    // populate questions for items using Mongoose
-    const items = await Promise.all((module.items || []).map(async it => {
-      const q = it.questionId ? await QuestionModel.findById(it.questionId).lean() : null;
-      return { ...it, question: q };
-    }));
+    // Handle both old format (items with questionId) and new format (exercises array)
+    let items = [];
+    
+    if (module.exercises && module.exercises.length > 0) {
+      // New format: exercises array contains question IDs directly
+      items = await Promise.all(module.exercises.map(async (exerciseId) => {
+        const q = await QuestionModel.findById(exerciseId).lean();
+        return {
+          title: q?.text?.substring(0, 50) + '...' || 'Question',
+          difficulty: q?.difficulty || 0,
+          question: q
+        };
+      }));
+    } else if (module.items && module.items.length > 0) {
+      // Old format: items with questionId field
+      items = await Promise.all(module.items.map(async it => {
+        const q = it.questionId ? await QuestionModel.findById(it.questionId).lean() : null;
+        return { ...it, question: q };
+      }));
+    }
 
     module.items = items;
     res.json(module);
   } catch (e) {
+    console.error('Error in /api/module/:id:', e);
     res.status(401).json({ error: 'Invalid token' });
   }
 });

@@ -29,9 +29,20 @@ export default function LearningPath({ token }){
     setFeedback(null);
     setLoading(true);
     try{
-      const mod = await getModule(token, m.id);
+      const moduleId = m._id || m.id;
+      console.log('🔍 Loading module:', moduleId);
+      const mod = await getModule(token, moduleId);
+      console.log('📦 Module data received:', mod);
+      console.log('   Items count:', mod?.items?.length || 0);
+      console.log('   Exercises count:', mod?.exercises?.length || 0);
+      if (mod?.items?.length > 0) {
+        console.log('   First item:', mod.items[0]);
+      }
       setModuleContent(mod);
-    }catch(e){ console.error(e); }
+    }catch(e){ 
+      console.error('❌ Error loading module:', e);
+      alert('Failed to load module. Check console for details.');
+    }
     finally{ setLoading(false); }
   }
 
@@ -64,27 +75,36 @@ export default function LearningPath({ token }){
         </h4>
         <p style={{color:'#666',marginBottom:'16px'}}>Recommended modules sorted by fit:</p>
         <div style={{display:'grid',gap:'12px'}}>
-          {path.modules.map(m => (
-            <div key={m.id || m._id} style={{
-              padding:'16px',
-              background:'#f9fafb',
-              borderRadius:'8px',
-              border: activeModule?.id === m.id ? '2px solid #667eea' : '1px solid #e0e0e0',
-              cursor:'pointer',
-              transition:'all 0.3s ease'
-            }}
-            onClick={()=>openModule(m)}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <div>
-                  <strong style={{color:'#1a1a1a',fontSize:'16px'}}>{m.title}</strong>
-                  <div style={{color:'#666',fontSize:'14px',marginTop:'4px'}}>
-                    {m.skill} • Level {m.level}
+          {path.modules.map(m => {
+            const moduleId = m._id || m.id;
+            const activeModuleId = activeModule?._id || activeModule?.id;
+            const isActive = activeModuleId === moduleId;
+            
+            return (
+              <div key={moduleId} style={{
+                padding:'16px',
+                background:'#f9fafb',
+                borderRadius:'8px',
+                border: isActive ? '2px solid #667eea' : '1px solid #e0e0e0',
+                cursor:'pointer',
+                transition:'all 0.3s ease'
+              }}
+              onClick={()=>{
+                console.log('Module clicked:', m.title);
+                openModule(m);
+              }}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <strong style={{color:'#1a1a1a',fontSize:'16px'}}>{m.title}</strong>
+                    <div style={{color:'#666',fontSize:'14px',marginTop:'4px'}}>
+                      {m.skill} • Level {m.level}
+                    </div>
                   </div>
+                  <ChevronRight size={20} color="#667eea" />
                 </div>
-                <ChevronRight size={20} color="#667eea" />
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

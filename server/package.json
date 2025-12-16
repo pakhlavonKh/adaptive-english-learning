@@ -7,7 +7,10 @@
     "build": "tsc",
     "seed": "node scripts/seed-comprehensive.js",
     "seed:quick": "node scripts/seed-db.js",
-    "content:stats": "node scripts/view-content-stats.js"
+    "content:stats": "node scripts/view-content-stats.js",
+    "clear:old": "node scripts/clear-old-questions.js",
+    "reset": "node scripts/reset-database.js",
+    "debug:db": "node scripts/debug-db.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
