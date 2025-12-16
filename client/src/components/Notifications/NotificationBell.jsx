@@ -86,14 +86,14 @@ const NotificationBell = ({ token }) => {
     const diffMs = now - notifTime;
     const diffMins = Math.floor(diffMs / 60000);
     
-    if (diffMins < 1) return 'Az önce';
-    if (diffMins < 60) return `${diffMins} dakika önce`;
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
     
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} saat önce`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
     
     const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} gün önce`;
+    return `${diffDays} days ago`;
   };
 
   const styles = {
@@ -237,7 +237,7 @@ const NotificationBell = ({ token }) => {
         {/* Header */}
         <div style={styles.header}>
           <span style={styles.headerTitle}>
-            Bildirimler {unreadCount > 0 && `(${unreadCount})`}
+            Notifications {unreadCount > 0 && `(${unreadCount})`}
           </span>
           {unreadCount > 0 && (
             <button 
@@ -246,7 +246,7 @@ const NotificationBell = ({ token }) => {
               onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
             >
-              Tümünü okundu işaretle
+              Mark all as read
             </button>
           )}
         </div>
@@ -256,12 +256,12 @@ const NotificationBell = ({ token }) => {
           {loading ? (
             <div style={styles.emptyState}>
               <div style={styles.emptyIcon}>⏳</div>
-              Yükleniyor...
+              Loading...
             </div>
           ) : notifications.length === 0 ? (
             <div style={styles.emptyState}>
               <div style={styles.emptyIcon}>✅</div>
-              Yeni bildiriminiz yok
+              No new notifications
             </div>
           ) : (
             notifications.map((notif) => (

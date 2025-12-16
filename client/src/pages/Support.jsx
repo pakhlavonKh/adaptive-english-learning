@@ -47,7 +47,7 @@ export default function Support({ token, onBack }) {
     e.preventDefault();
     
     if (!subject.trim() || !message.trim()) {
-      setSubmitMessage({ type: 'error', text: 'Lütfen tüm alanları doldurun.' });
+      setSubmitMessage({ type: 'error', text: 'Please fill in all required fields.' });
       return;
     }
 
@@ -57,7 +57,7 @@ export default function Support({ token, onBack }) {
       
       setSubmitMessage({ 
         type: 'success', 
-        text: result.message || 'Talebiniz başarıyla gönderildi!'
+        text: result.message || 'Your request has been submitted successfully!'
       });
       
       // Formu temizle
@@ -71,7 +71,7 @@ export default function Support({ token, onBack }) {
     } catch (error) {
       setSubmitMessage({ 
         type: 'error', 
-        text: 'Talep gönderilirken hata oluştu. Lütfen tekrar deneyin.' 
+        text: 'An error occurred while submitting your request. Please try again.' 
       });
     } finally {
       setSubmitting(false);
@@ -91,20 +91,20 @@ export default function Support({ token, onBack }) {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'open': return 'Açık';
-      case 'in_progress': return 'İşlemde';
-      case 'resolved': return 'Çözüldü';
-      case 'closed': return 'Kapatıldı';
+      case 'open': return 'Open';
+      case 'in_progress': return 'In Progress';
+      case 'resolved': return 'Resolved';
+      case 'closed': return 'Closed';
       default: return status;
     }
   };
 
   const getPriorityText = (priority) => {
     switch (priority) {
-      case 'low': return 'Düşük';
+      case 'low': return 'Low';
       case 'normal': return 'Normal';
-      case 'high': return 'Yüksek';
-      case 'urgent': return 'Acil';
+      case 'high': return 'High';
+      case 'urgent': return 'Urgent';
       default: return priority;
     }
   };
@@ -276,7 +276,7 @@ export default function Support({ token, onBack }) {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.title}>🎫 Yardım & Destek</h1>
+        <h1 style={styles.title}>🎫 Help & Support</h1>
         <button 
           onClick={onBack}
           style={{
@@ -289,7 +289,7 @@ export default function Support({ token, onBack }) {
             fontWeight: '600'
           }}
         >
-          ← Geri Dön
+          ← Go Back
         </button>
       </div>
 
@@ -302,7 +302,7 @@ export default function Support({ token, onBack }) {
           }}
           onClick={() => setActiveTab('new')}
         >
-          📝 Yeni Talep Oluştur
+          📝 Create New Request
         </div>
         <div 
           style={{
@@ -311,7 +311,7 @@ export default function Support({ token, onBack }) {
           }}
           onClick={() => setActiveTab('history')}
         >
-          📋 Geçmiş Taleplerim
+          📋 My Past Requests
         </div>
       </div>
 
@@ -319,9 +319,9 @@ export default function Support({ token, onBack }) {
       {activeTab === 'new' ? (
         // Yeni Talep Formu
         <div style={styles.card}>
-          <h2 style={{ marginTop: 0, color: '#333' }}>Destek Talebi Oluştur</h2>
+          <h2 style={{ marginTop: 0, color: '#333' }}>Create Support Request</h2>
           <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>
-            Karşılaştığınız sorun veya yardım talebinizi aşağıdaki form ile bize iletebilirsiniz.
+            You can submit any issues or help requests through the form below.
           </p>
 
           {/* Submit Message */}
@@ -337,11 +337,11 @@ export default function Support({ token, onBack }) {
           <form onSubmit={handleSubmit}>
             {/* Konu */}
             <div style={styles.formGroup}>
-              <label style={styles.label}>Konu *</label>
+              <label style={styles.label}>Subject *</label>
               <input 
                 type="text"
                 style={styles.input}
-                placeholder="Örn: Giriş yapamıyorum"
+                placeholder="e.g., Cannot log in"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 required
@@ -350,25 +350,25 @@ export default function Support({ token, onBack }) {
 
             {/* Öncelik */}
             <div style={styles.formGroup}>
-              <label style={styles.label}>Öncelik Seviyesi</label>
+              <label style={styles.label}>Priority Level</label>
               <select 
                 style={styles.select}
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
               >
-                <option value="low">Düşük - Genel soru</option>
-                <option value="normal">Normal - Standart destek</option>
-                <option value="high">Yüksek - Önemli sorun</option>
-                <option value="urgent">Acil - Kritik hata</option>
+                <option value="low">Low - General question</option>
+                <option value="normal">Normal - Standard support</option>
+                <option value="high">High - Important issue</option>
+                <option value="urgent">Urgent - Critical error</option>
               </select>
             </div>
 
             {/* Mesaj */}
             <div style={styles.formGroup}>
-              <label style={styles.label}>Mesaj *</label>
+              <label style={styles.label}>Message *</label>
               <textarea 
                 style={styles.textarea}
-                placeholder="Sorununuzu veya talebinizi detaylı bir şekilde açıklayın..."
+                placeholder="Please describe your issue or request in detail..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 required
@@ -383,24 +383,24 @@ export default function Support({ token, onBack }) {
               onMouseEnter={(e) => !submitting && (e.currentTarget.style.background = '#5568d3')}
               onMouseLeave={(e) => !submitting && (e.currentTarget.style.background = '#667eea')}
             >
-              {submitting ? 'Gönderiliyor...' : '📤 Talebi Gönder'}
+              {submitting ? 'Submitting...' : '📤 Submit Request'}
             </button>
           </form>
         </div>
       ) : (
         // Geçmiş Talepler
         <div style={styles.card}>
-          <h2 style={{ marginTop: 0, color: '#333' }}>Geçmiş Destek Talepleriniz</h2>
+          <h2 style={{ marginTop: 0, color: '#333' }}>Your Past Support Requests</h2>
           
           {loadingTickets ? (
             <div style={styles.emptyState}>
               <div style={styles.emptyIcon}>⏳</div>
-              <p>Yükleniyor...</p>
+              <p>Loading...</p>
             </div>
           ) : tickets.length === 0 ? (
             <div style={styles.emptyState}>
               <div style={styles.emptyIcon}>📭</div>
-              <p>Henüz destek talebi oluşturmadınız.</p>
+              <p>You haven't created any support requests yet.</p>
             </div>
           ) : (
             <div style={styles.ticketList}>
@@ -436,8 +436,8 @@ export default function Support({ token, onBack }) {
                   </p>
                   
                   <div style={styles.ticketMeta}>
-                    <span>🏷️ Öncelik: {getPriorityText(ticket.priority)}</span>
-                    <span>📅 {new Date(ticket.createdAt).toLocaleDateString('tr-TR')}</span>
+                    <span>🏷️ Priority: {getPriorityText(ticket.priority)}</span>
+                    <span>📅 {new Date(ticket.createdAt).toLocaleDateString('en-US')}</span>
                   </div>
                 </div>
               ))}
