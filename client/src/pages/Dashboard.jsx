@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getNextQuestion, submit, seed } from '../api';
+import Support from './Support';
 
 export default function Dashboard({ token, user, onLogout }){
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState('');
   const [status, setStatus] = useState(null);
+  const [showSupport, setShowSupport] = useState(false); // FR23: Support sayfası görünürlüğü
 
   const load = async () => {
     try{
@@ -36,11 +38,17 @@ export default function Dashboard({ token, user, onLogout }){
     }
   }
 
+  // FR23: Support sayfası gösteriliyorsa, onu render et
+  if (showSupport) {
+    return <Support token={token} onBack={() => setShowSupport(false)} />;
+  }
+
   return (
     <div className="container">
       <div className="top">
         <h2>Welcome, {user?.username}</h2>
         <div>
+          <button onClick={() => setShowSupport(true)}>🎫 Help</button>
           <button onClick={onLogout}>Logout</button>
           <button onClick={async ()=>{ await seed(); await load(); }}>Seed</button>
         </div>

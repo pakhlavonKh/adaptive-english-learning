@@ -3,8 +3,8 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-// 1. ADIM: Bileşeni buraya import ediyoruz
-import NotificationList from './components/Notifications/NotificationList';
+// FR17: Yeni In-App Notification sistemi (Çan ikonu)
+import NotificationBell from './components/Notifications/NotificationBell';
 
 export default function App() {
   const [page, setPage] = useState('landing');
@@ -22,11 +22,12 @@ export default function App() {
     }
   }, []);
 
-  // 2. ADIM: Giriş yapılmışsa (Token varsa) hem Bildirimleri hem Dashboard'u göster
-  // React'te birden fazla bileşeni aynı anda döndürmek için <> ... </> (Fragment) içine almamız gerekir.
+  // Kullanıcı giriş yaptıysa Dashboard ve NotificationBell göster
   if (token) return (
     <>
-      <NotificationList />
+      {/* FR17: Çan ikonu - Kullanıcı giriş yaptığında sağ üstte görünür */}
+      <NotificationBell token={token} />
+      
       <Dashboard 
         token={token} 
         user={user} 
@@ -41,13 +42,12 @@ export default function App() {
     </>
   );
 
+  // Landing page'de bildirim sistemi gösterme
   if (page === 'landing') return <Landing onGetStarted={() => setPage('login')} />;
 
+  // Login/Register sayfalarında da bildirim yok
   return (
     <div className="container">
-      {/* 3. ADIM: Login/Register ekranlarında da görünmesi için buraya ekliyoruz */}
-      <NotificationList />
-      
       <h1>Adaptive English</h1>
       <div className="auth">
         {page === 'login' ? (
