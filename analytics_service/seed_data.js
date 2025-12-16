@@ -1,32 +1,74 @@
 const mongoose = require('mongoose');
 const { Student, StudentProgress } = require('./models');
 
-// MongoDB Connection
-const MONGO_URI = 'mongodb://localhost:27017/learning_db';
+// Connection
+mongoose.connect('mongodb://127.0.0.1:27017/learning_db')
+    .then(() => console.log("✅ Connected to MongoDB for Seeding"))
+    .catch(err => console.error("❌ Connection Error:", err));
 
-const seed = async () => {
-    await mongoose.connect(MONGO_URI);
-    console.log("MongoDB'ye bağlanıldı...");
+const seedDB = async () => {
+    try {
+        // Clean First
+        await Student.deleteMany({});
+        await StudentProgress.deleteMany({});
+        console.log("🧹 Old data cleared...");
 
-    // Clear existing data (For testing purposes)
-    await Student.deleteMany({});
-    await StudentProgress.deleteMany({});
-    console.log("Eski veriler temizlendi.");
+        // 1. Create Students
+        const s1 = await Student.create({ name: "Ali Yilmaz", email: "ali@test.com", current_level: "B1" });
+        const s2 = await Student.create({ name: "Ayse Demir", email: "ayse@test.com", current_level: "A2" });
+        const s3 = await Student.create({ name: "Mehmet Oz", email: "mehmet@test.com", current_level: "C1" });
+        const s4 = await Student.create({ name: "Zeynep Kaya", email: "zeynep@test.com", current_level: "A1" });
+        const s5 = await Student.create({ name: "Canan Dag", email: "canan@test.com", current_level: "B2" });
 
-    // 1. Create Students
-    const s1 = await Student.create({ name: "Mehmet Yilmaz", email: "mehmet@okul.com", current_level: "A2" });
-    const s2 = await Student.create({ name: "Zeynep Kaya", email: "zeynep@okul.com", current_level: "B1" });
-    const s3 = await Student.create({ name: "Can Demir", email: "can@okul.com", current_level: "A1" });
+        // 2. Create Notes (Progress)
+        // Added 'lesson_id: 101' to each
+        // Ali: Good
+        await StudentProgress.create({ 
+            student_id: s1._id, 
+            lesson_id: 101,  // <-- Added
+            retention_score: 85.5, 
+            last_activity_date: new Date() 
+        });
 
-    // 2. Create Progress/Grades
-    await StudentProgress.create([
-        { student_id: s1._id, lesson_id: 1, retention_score: 85.0, accuracy_rate: 90.0 },
-        { student_id: s2._id, lesson_id: 1, retention_score: 60.0, accuracy_rate: 70.0 },
-        { student_id: s3._id, lesson_id: 1, retention_score: 30.0, accuracy_rate: 40.0 }
-    ]);
+        // Ayşe: Risky
+        await StudentProgress.create({ 
+            student_id: s2._id, 
+            lesson_id: 101,  // <-- Added
+            retention_score: 42.0, 
+            last_activity_date: new Date() 
+        });
 
-    console.log("Success: Data added to MongoDB!");
-    process.exit();
+        // Mehmet: Super
+        await StudentProgress.create({ 
+            student_id: s3._id, 
+            lesson_id: 101,  // <-- Added
+            retention_score: 92.0, 
+            last_activity_date: new Date() 
+        });
+
+        // Zeynep: Very Risky
+        await StudentProgress.create({ 
+            student_id: s4._id, 
+            lesson_id: 101,  // <-- Added
+            retention_score: 30.5, 
+            last_activity_date: new Date() 
+        });
+
+        // Canan: Medium
+        await StudentProgress.create({ 
+            student_id: s5._id, 
+            lesson_id: 101,  // <-- Added
+            retention_score: 65.0, 
+            last_activity_date: new Date() 
+        });
+
+        console.log("✅ Database Seeded Successfully! (Added datas)")
+
+    } catch (err) {
+        console.error("❌ Seeding Error:", err);
+    } finally {
+        mongoose.connection.close();
+    }
 };
 
-seed();
+seedDB();
