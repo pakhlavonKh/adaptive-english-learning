@@ -55,8 +55,10 @@ async function getLessonById(id) {
 
 // ✅ CACHE'Lİ LESSON CONTENT (FR20 & NFR1)
 async function getLessonContent(lessonId, languageCode = "en") {
-  const objectId = new mongoose.Types.ObjectId(lessonId);
+  // (opsiyonel) güvenlik: invalid id gelirse null dön
+  if (!mongoose.isValidObjectId(lessonId)) return null;
 
+  const objectId = new mongoose.Types.ObjectId(lessonId);
   const cacheKey = makeKey(["lessonContent", lessonId, languageCode]);
 
   // 1️⃣ Cache kontrolü
@@ -91,7 +93,6 @@ async function getLessonContent(lessonId, languageCode = "en") {
   return result;
 }
 
-
 // Listeleme
 async function listLessons(filter = {}) {
   const query = {};
@@ -102,9 +103,29 @@ async function listLessons(filter = {}) {
   return Lesson.find(query).lean();
 }
 
+// ✅ Translation upsert
+async function upsertLessonTranslation(lessonId, translation) {
+  if (!mongoose.isValidObjectId(lessonId)) {
+    throw new Error("Invalid lessonId");
+  }
+
+  const { languageCode, title, summary, contentHtml } = translation;
+  if (!languageCode) throw new Error("languageCode is required");
+
+  const doc = await LessonTranslation.findOneAndUpdate(
+    { lesson: lessonId, languageCode },
+    { $set: { title, summary, contentHtml } },
+    { new: true, upsert: true }
+  ).lean();
+
+  // (opsiyonel) burada cache invalidate da yapabilirsin, ama şart değil
+  return doc;
+}
+
 module.exports = {
   createLesson,
   getLessonById,
   getLessonContent,
-  listLessons
+  listLessons,
+  upsertLessonTranslation
 };

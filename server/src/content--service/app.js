@@ -6,6 +6,8 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const lessonRoutes = require("./routes/lessonRoutes");
+const progressRoutes = require("./routes/progressRoutes");
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -18,6 +20,8 @@ app.use(express.json());
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/content-blocks", contentBlockRoutes);
 app.use("/api/content", adaptiveRoutes);
+app.use("/api/progress", progressRoutes);
+
 
 // health check
 app.get("/health", (req, res) => {

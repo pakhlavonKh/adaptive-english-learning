@@ -1,4 +1,15 @@
 const lessonService = require("../services/lessonService");
+async function upsertTranslation(req, res) {
+  try {
+    const { id } = req.params; // lessonId
+    const translation = req.body; // { languageCode, title, summary, contentHtml }
+    const result = await lessonService.upsertLessonTranslation(id, translation);
+    res.json(result);
+  } catch (err) {
+    console.error("upsertTranslation error:", err);
+    res.status(500).json({ message: "Error upserting translation" });
+  }
+}
 
 async function createLesson(req, res) {
   try {
@@ -59,9 +70,13 @@ async function listLessons(req, res) {
   }
 }
 
-module.exports = {
+
+  module.exports = {
   createLesson,
   getLesson,
-  getLessonContent, // ✅ export eklendi
-  listLessons
+  listLessons,
+  getLessonContent,
+  upsertTranslation, 
 };
+
+
