@@ -10,9 +10,35 @@ export default function TeacherDashboard({ token, user, onLogout }) {
   const [stats, setStats] = useState(null);
   const [analyticsError, setAnalyticsError] = useState(null);
 
+  // Function Pulling Data
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // 1. Fetch Class Report
+      const reportRes = await fetch('http://localhost:8000/api/reports/class/101');
+      const reportData = await reportRes.json();
+      setReport(reportData);
+
+      // 2. Fetch Class Average
+      const statsRes = await fetch('http://localhost:8000/api/reports/class/101/average');
+      const statsData = await statsRes.json();
+      setStats(statsData);
+      
+      setLoading(false);
+    } catch (err) {
+      console.error("Data fetch error:", err);
+      setError("Could not connect to Analytics Service. Is the Backend running?");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+<<<<<<< HEAD
     loadStudents();
     loadAnalytics();
+=======
+    fetchData();
+>>>>>>> origin/semiha
   }, []);
 
   async function loadStudents() {
@@ -60,6 +86,7 @@ export default function TeacherDashboard({ token, user, onLogout }) {
   const totalQuestions = students.reduce((sum, s) => sum + (s.stats?.totalQuestions || 0), 0);
 
   return (
+<<<<<<< HEAD
     <div className="dashboard-container">
       {/* Header */}
       <header className="dashboard-header">
@@ -99,6 +126,59 @@ export default function TeacherDashboard({ token, user, onLogout }) {
               <LogOut size={20} />
               Logout
             </button>
+=======
+    <div className="teacher-dashboard" style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #2196F3', paddingBottom: '10px', marginBottom: '20px' }}>
+        <h2 style={{ color: '#2196F3', margin: 0 }}>
+          📊 Teacher Analytics Panel
+        </h2>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+            {/* REFRESH BUTTON */}
+            <button 
+                onClick={fetchData}
+                style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#2196F3',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                }}
+            >
+                🔄 Refresh Data
+            </button>
+
+            {/* --- NEW EXPORT PDF BUTTON (FR14) --- */}
+            <button 
+                onClick={() => window.open('http://localhost:8000/export/class/101', '_blank')}
+                style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#27ae60', // Green color
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                }}
+            >
+                📄 Download PDF Report
+            </button>
+        </div>
+      </div>
+
+      {/* --- CARD 1: CLASS SUMMARY --- */}
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#e3f2fd', border: '1px solid #bbdefb', borderRadius: '10px', padding: '20px' }}>
+          <h4 style={{ margin: '0 0 10px 0', color: '#1565c0' }}>Class Average Retention</h4>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0d47a1' }}>
+            %{stats ? stats.average_retention : '-'}
+>>>>>>> origin/semiha
           </div>
         </div>
       </header>
@@ -170,6 +250,7 @@ export default function TeacherDashboard({ token, user, onLogout }) {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Students Table */}
       <div style={{
         background: 'white',
@@ -191,6 +272,34 @@ export default function TeacherDashboard({ token, user, onLogout }) {
           <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
             No students found
           </div>
+=======
+      {/* --- CARD 2: STUDENT LIST --- */}
+      <div style={{ backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '10px', padding: '20px' }}>
+        <h3 style={{ marginTop: 0, color: '#333' }}>Student Performance Details</h3>
+        {report && report.data && report.data.length > 0 ? (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '15px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
+                <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Name</th>
+                <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Level</th>
+                <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Score</th>
+                <th style={{ padding: '12px', borderBottom: '2px solid #ddd' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.data.map((student) => (
+                <tr key={student.id} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: '12px' }}><strong>{student.name}</strong></td>
+                  <td style={{ padding: '12px' }}>{student.level}</td>
+                  <td style={{ padding: '12px' }}>%{student.retention}</td>
+                  <td style={{ padding: '12px' }}>
+                    {student.risk ? <span style={{ color: 'red', fontWeight: 'bold' }}> RISKY</span> : <span style={{ color: 'green', fontWeight: 'bold' }}> OK</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+>>>>>>> origin/semiha
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>

@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '..', 'server', '.env') });
 
-import TrainingDataModel from '../server/src/models/trainingData.js';
+import TrainingDataModel from '../src/models/trainingData.js';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/english-learning';
 
