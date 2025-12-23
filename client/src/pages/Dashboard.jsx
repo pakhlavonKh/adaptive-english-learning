@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
-import { getNextQuestion, submit, seed } from '../api';
-=======
-import React, { useState, useEffect } from "react";
-import { getNextQuestion, submit, seed } from "../api";
-import LearningPath from "./LearningPath";
->>>>>>> origin/zerda
+import { getNextQuestion, submit, seed, checkNeedsGeneration } from '../api';
+import LearningPath from './LearningPath';
+import InitialPathGenerator from '../components/InitialPathGenerator';
+import Support from './Support';
 
 function getLanguageCode() {
   return localStorage.getItem("languageCode") || "en";
@@ -22,10 +19,31 @@ function appendOfflineProgress(entry) {
 
 export default function Dashboard({ token, user, onLogout }) {
   const [question, setQuestion] = useState(null);
-  const [answer, setAnswer] = useState("");
+  const [answer, setAnswer] = useState('');
   const [status, setStatus] = useState(null);
+  const [needsPathGeneration, setNeedsPathGeneration] = useState(false);
+  const [checkingPath, setCheckingPath] = useState(true);
+  const [generatedPath, setGeneratedPath] = useState(null);
+  const [showSupport, setShowSupport] = useState(false);
+  const [showPath, setShowPath] = useState(false);
 
-<<<<<<< HEAD
+  const load = async () => {
+    try {
+      const lang = getLanguageCode();
+      const q = await getNextQuestion(token, lang);
+
+      if (q.message) {
+        setQuestion(null);
+        setStatus(q.message);
+      } else {
+        setQuestion(q);
+        setStatus(null);
+      }
+    } catch (e) {
+      setStatus(e.response?.data?.error || 'Failed to load');
+    }
+  };
+
   const checkInitialPath = async () => {
     try {
       setCheckingPath(true);
@@ -39,13 +57,51 @@ export default function Dashboard({ token, user, onLogout }) {
     }
   };
 
-  useEffect(()=>{ 
-    checkInitialPath(); 
+  useEffect(() => {
+    checkInitialPath();
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePathGenerated = (path) => {
     setGeneratedPath(path);
     setNeedsPathGeneration(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!question) return;
+
+    const userAnswer = (answer || '').trim();
+    const correct =
+      userAnswer.toLowerCase() === (question.answer || '').toLowerCase();
+
+    const payload = {
+      questionId: question.id,
+      correct,
+      // helpful metadata for sync/debugging
+      languageCode: getLanguageCode(),
+      answeredAt: new Date().toISOString()
+    };
+
+    try {
+      const res = await submit(token, question.id, correct);
+      setStatus(res.correct ? 'Correct' : 'Incorrect');
+      setAnswer('');
+      await load();
+    } catch (e) {
+      // If offline / network error, save progress locally for background sync
+      const isNetworkError = !e.response; // axios: no response usually means network/offline
+      if (isNetworkError) {
+        appendOfflineProgress(payload);
+        setStatus('Offline: progress saved and will sync when internet returns ✅');
+        setAnswer('');
+        await load();
+        return;
+      }
+
+      setStatus(e.response?.data?.error || 'Submit failed');
+    }
   };
 
   // Show loading state while checking
@@ -86,69 +142,10 @@ export default function Dashboard({ token, user, onLogout }) {
     );
   }
 
-  // FR23: Support sayfası gösteriliyorsa, onu render et
+  // FR23: Support page
   if (showSupport) {
     return <Support token={token} onBack={() => setShowSupport(false)} />;
   }
-=======
-  const load = async () => {
-    try {
-      const lang = getLanguageCode();
-      const q = await getNextQuestion(token, lang);
-
-      if (q.message) {
-        setQuestion(null);
-        setStatus(q.message);
-      } else {
-        setQuestion(q);
-        setStatus(null);
-      }
-    } catch (e) {
-      setStatus(e.response?.data?.error || "Failed to load");
-    }
-  };
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!question) return;
-
-    const userAnswer = (answer || "").trim();
-    const correct =
-      userAnswer.toLowerCase() === (question.answer || "").toLowerCase();
-
-    const payload = {
-      questionId: question.id,
-      correct,
-      // helpful metadata for sync/debugging
-      languageCode: getLanguageCode(),
-      answeredAt: new Date().toISOString()
-    };
-
-    try {
-      const res = await submit(token, question.id, correct);
-      setStatus(res.correct ? "Correct" : "Incorrect");
-      setAnswer("");
-      await load();
-    } catch (e) {
-      // ✅ If offline / network error, save progress locally for background sync
-      const isNetworkError = !e.response; // axios: no response usually means network/offline
-      if (isNetworkError) {
-        appendOfflineProgress(payload);
-        setStatus("Offline: progress saved and will sync when internet returns ✅");
-        setAnswer("");
-        await load();
-        return;
-      }
-
-      setStatus(e.response?.data?.error || "Submit failed");
-    }
-  };
->>>>>>> origin/zerda
 
   return (
     <div className="container">
@@ -156,22 +153,11 @@ export default function Dashboard({ token, user, onLogout }) {
         <h2>Welcome, {user?.username}</h2>
         <div>
           <button onClick={onLogout}>Logout</button>
-<<<<<<< HEAD
-          <button onClick={async ()=>{ await seed(); await load(); }}>Seed</button>
-        </div>
-      </div>
-=======
-          <button
-            onClick={async () => {
-              await seed();
-              await load();
-            }}
-          >
-            Seed
-          </button>
+          <button onClick={async () => { await seed(); await load(); }}>Seed</button>
           <button onClick={() => setShowPath((s) => !s)}>
-            {showPath ? "Hide" : "View"} Learning Path
+            {showPath ? 'Hide' : 'View'} Learning Path
           </button>
+          <button onClick={() => setShowSupport(true)}>Support</button>
         </div>
       </div>
 
@@ -196,7 +182,6 @@ export default function Dashboard({ token, user, onLogout }) {
           <LearningPath token={token} />
         </div>
       )}
->>>>>>> origin/zerda
     </div>
   );
 }
