@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { register } from '../api';
 import { Mail, Lock, User, ArrowRight, CheckCircle, ChevronLeft } from 'lucide-react';
 
-export default function Register(){
+export default function Register({ onLogin }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -12,7 +12,7 @@ export default function Register(){
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const submit = async (e) =>{
+  const submit = async (e) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
@@ -26,12 +26,18 @@ export default function Register(){
     }
 
     setLoading(true);
-    try{
-      await register(username, password);
+    try {
+      const res = await register(username, password);
       setSuccess(true);
       setMsg('✨ Account created successfully!');
-      setTimeout(() => navigate('/login'), 2500);
-    }catch(e){
+      // Auto-login after successful registration
+      if (res.token && res.user) {
+        onLogin(res.token, res.user);
+        setTimeout(() => navigate('/dashboard'), 1500);
+      } else {
+        setTimeout(() => navigate('/login'), 2500);
+      }
+    } catch(e) {
       setMsg(e.response?.data?.error || 'Registration failed');
     } finally {
       setLoading(false);

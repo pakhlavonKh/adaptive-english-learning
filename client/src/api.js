@@ -66,6 +66,34 @@ export const syncProgress = (token, progressPayload) =>
     headers: { Authorization: `Bearer ${token}` }
   }).then((r) => r.data);
 
+/* ================= INITIAL PATH GENERATION ================= */
+
+// Generate initial learning path for new users
+export const generateInitialPath = (token, externalScores, targetSkills) =>
+  API.post('/path/generate', { externalScores, targetSkills }, {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then((r) => r.data);
+
+// Check if user needs initial path generation
+export const checkNeedsGeneration = (token) =>
+  API.get('/path/needs-generation', {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then((r) => r.data);
+
+/* ================= SUPPORT TICKETS ================= */
+
+// Create a support ticket
+export const createSupportTicket = (token, subject, message, priority = 'medium') =>
+  API.post('/support/tickets', { subject, message, priority }, {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then((r) => r.data);
+
+// Get user's support tickets
+export const getSupportTickets = (token) =>
+  API.get('/support/tickets', {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then((r) => r.data);
+
 /* ================= AI FEATURES ================= */
 
 // Get AI explanation for a concept

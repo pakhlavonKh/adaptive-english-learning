@@ -187,8 +187,16 @@ app.get('/api/learning-path', async (req, res) => {
     const modules = await ModuleModel.find().lean();
     const targetLevel = thetaToLevel(user.theta);
     modules.sort((a, b) => Math.abs(a.level - targetLevel) - Math.abs(b.level - targetLevel));
-    res.json({ modules, suggestedLevel: targetLevel, theta: user.theta });
+    
+    // Map _id to id for frontend compatibility
+    const modulesWithId = modules.map(m => ({
+      ...m,
+      id: m._id.toString()
+    }));
+    
+    res.json({ modules: modulesWithId, suggestedLevel: targetLevel, theta: user.theta });
   } catch (e) {
+    console.error('Error in /api/learning-path:', e);
     res.status(401).json({ error: 'Invalid token' });
   }
 });
@@ -203,32 +211,47 @@ app.get('/api/module/:id', async (req, res) => {
     const module = await ModuleModel.findById(id).lean();
     if (!module) return res.status(404).json({ error: 'Module not found' });
 
+    console.log(`📦 Loading module: ${module.title}`);
+    console.log(`   Items in DB: ${module.items?.length || 0}`);
+    console.log(`   Exercises in DB: ${module.exercises?.length || 0}`);
+
     // Handle both old format (items with questionId) and new format (exercises array)
     let items = [];
     
     if (module.exercises && module.exercises.length > 0) {
       // New format: exercises array contains question IDs directly
+      console.log('   Using exercises format');
       items = await Promise.all(module.exercises.map(async (exerciseId) => {
         const q = await QuestionModel.findById(exerciseId).lean();
         return {
+          id: exerciseId,
           title: q?.text?.substring(0, 50) + '...' || 'Question',
+          type: q?.type || 'objective',
           difficulty: q?.difficulty || 0,
           question: q
         };
       }));
     } else if (module.items && module.items.length > 0) {
       // Old format: items with questionId field
-      items = await Promise.all(module.items.map(async it => {
+      console.log('   Using items format');
+      items = await Promise.all(module.items.map(async (it, index) => {
+        console.log(`   Loading item ${index + 1}, questionId: ${it.questionId}`);
         const q = it.questionId ? await QuestionModel.findById(it.questionId).lean() : null;
-        return { ...it, question: q };
+        console.log(`   Question found: ${q ? 'YES' : 'NO'}`);
+        return { 
+          ...it, 
+          id: it._id || it.questionId || `item-${index}`,
+          question: q 
+        };
       }));
     }
 
+    console.log(`   ✅ Loaded ${items.length} items with questions`);
     module.items = items;
     res.json(module);
   } catch (e) {
     console.error('Error in /api/module/:id:', e);
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(500).json({ error: 'Failed to load module', details: e.message });
   }
 });
 

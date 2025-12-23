@@ -16,8 +16,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pakhlavonKh/adaptive-english-learning.git"
-<<<<<<< HEAD
-=======
   },
   "keywords": [],
   "author": "",
@@ -31,6 +29,5 @@
     "express": "^5.2.1",
     "mongoose": "^9.0.2",
     "pdfkit": "^0.17.2"
->>>>>>> origin/semiha
   }
 }

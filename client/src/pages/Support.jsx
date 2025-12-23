@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createSupportTicket, getSupportTickets } from '../api';
 
 /**
@@ -8,7 +9,8 @@ import { createSupportTicket, getSupportTickets } from '../api';
  * Öğrencilerin hata bildirimi veya yardım talebi gönderebildiği sayfa.
  * Ayrıca geçmiş destek taleplerini listeleyebilirler.
  */
-export default function Support({ token, onBack }) {
+export default function Support({ token }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('new'); // 'new' veya 'history'
   
   // Yeni talep formu state'leri
@@ -278,7 +280,7 @@ export default function Support({ token, onBack }) {
       <div style={styles.header}>
         <h1 style={styles.title}>🎫 Help & Support</h1>
         <button 
-          onClick={onBack}
+          onClick={() => navigate('/dashboard')}
           style={{
             padding: '10px 20px',
             background: '#9e9e9e',

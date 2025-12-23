@@ -3,22 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '../api';
 import { Mail, Lock, ArrowRight, ChevronLeft } from 'lucide-react';
 
-export default function Login(){
+export default function Login({ onLogin }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const submit = async (e) =>{
+  const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try{
+    try {
       const res = await login(username, password);
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('user', JSON.stringify(res.user));
+      onLogin(res.token, res.user);
       navigate('/dashboard');
-    }catch(e){
+    } catch(e) {
       setErr(e.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);

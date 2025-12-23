@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Target, BookOpen, BarChart2, Zap, Globe2, Trophy } from 'lucide-react';
 // SVG illustrations (inline for demo)
 const HeroSVG = () => (
-  <svg width="320" height="220" viewBox="0 0 320 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginBottom: 24}}>
-    <text x="160" y="120" textAnchor="middle" fontSize="32" fill="white" fontFamily="Segoe UI" fontWeight="bold">Learn English</text>
+  <svg width="240" height="80" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginBottom: 20}}>
+    <text x="120" y="50" textAnchor="middle" fontSize="20" fill="white" fontFamily="Segoe UI" fontWeight="600">Learn English</text>
   </svg>
 );
 
@@ -85,20 +85,17 @@ export default function Landing() {
     {
       title: 'Learn at Your Own Pace',
       subtitle: 'Adaptive questions that grow with you',
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      backgroundImage: 'https://images.unsplash.com/photo-1516321318423-f06f70259b51?auto=format&fit=crop&w=1200&q=80'
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     },
     {
       title: 'Master English Vocabulary',
       subtitle: 'Never forget what you\'ve learned',
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      backgroundImage: 'https://images.unsplash.com/photo-1507842072343-583f20270319?auto=format&fit=crop&w=1200&q=80'
+      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
     },
     {
       title: 'Track Your Progress',
       subtitle: 'See measurable improvement every day',
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      backgroundImage: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80'
+      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
     }
   ];
 
@@ -125,20 +122,17 @@ export default function Landing() {
         <div 
           className="carousel-slide"
           style={{ 
-            backgroundImage: `url('${carouselSlides[carouselIndex].backgroundImage}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
+            background: carouselSlides[carouselIndex].gradient
           }}
         >
-          {/* Gradient Overlay */}
+          {/* Gradient Background */}
           <div style={{
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%)',
+            background: carouselSlides[carouselIndex].gradient,
             zIndex: 1
           }}></div>
 

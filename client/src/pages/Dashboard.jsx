@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getNextQuestion, submit, seed, checkNeedsGeneration } from '../api';
 import LearningPath from './LearningPath';
 import InitialPathGenerator from '../components/InitialPathGenerator';
-import Support from './Support';
 import AIAssistant from '../components/AIAssistant';
 
 function getLanguageCode() {
@@ -19,13 +19,11 @@ function appendOfflineProgress(entry) {
 }
 
 export default function Dashboard({ token, user, onLogout }) {
-  const [question, setQuestion] = useState(null);
-  const [answer, setAnswer] = useState('');
+  const navigate = useNavigate();
   const [status, setStatus] = useState(null);
   const [needsPathGeneration, setNeedsPathGeneration] = useState(false);
   const [checkingPath, setCheckingPath] = useState(true);
   const [generatedPath, setGeneratedPath] = useState(null);
-  const [showSupport, setShowSupport] = useState(false);
   const [showPath, setShowPath] = useState(false);
   const [showAI, setShowAI] = useState(false);
 
@@ -144,59 +142,44 @@ export default function Dashboard({ token, user, onLogout }) {
     );
   }
 
-  // FR23: Support page
-  if (showSupport) {
-    return <Support token={token} onBack={() => setShowSupport(false)} />;
-  }
-
   return (
-    <div className="container">
-      <div className="top">
-        <h2>Welcome, {user?.username}</h2>
-        <div>
-          <button onClick={onLogout}>Logout</button>
-          <button onClick={async () => { await seed(); await load(); }}>Seed</button>
-          <button onClick={() => setShowPath((s) => !s)}>
-            {showPath ? 'Hide' : 'View'} Learning Path
-          </button>
-          <button onClick={() => setShowSupport(true)}>Support</button>
-          <button onClick={() => setShowAI((s) => !s)} style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            border: 'none'
-          }}>
-            🤖 {showAI ? 'Hide' : 'Show'} AI Assistant
-          </button>
+    <div className="dashboard-full">
+      <nav className="dashboard-nav">
+        <div className="dashboard-nav-container">
+          <h1 className="dashboard-title">📖 Adaptive English</h1>
+          <div className="dashboard-nav-links">
+            <button className="nav-link" onClick={() => navigate('/dashboard')}>Dashboard</button>
+            <button className="nav-link" onClick={() => setShowPath((s) => !s)}>Learning Path</button>
+            <button className="nav-link" onClick={() => setShowAI((s) => !s)}>AI Assistant</button>
+            <button className="nav-link" onClick={() => navigate('/support')}>Support</button>
+            <button className="nav-link" onClick={() => navigate('/account')}>Account</button>
+            <button className="btn-logout" onClick={onLogout}>Logout</button>
+          </div>
         </div>
+      </nav>
+
+      <div className="dashboard-content">
+        <div className="welcome-section">
+          <h2 className="welcome-text">Welcome back, {user?.username}! 👋</h2>
+          <p className="welcome-subtitle">Ready to continue your English learning journey?</p>
+        </div>
+
+        {/* {status && <div className="status-message">{status}</div>} */}
+
+        
+
+        {showPath && (
+          <div className="content-panel">
+            <LearningPath token={token} />
+          </div>
+        )}
+
+        {showAI && (
+          <div className="content-panel">
+            <AIAssistant token={token} />
+          </div>
+        )}
       </div>
-
-      {status && <div className="status">{status}</div>}
-
-      {question ? (
-        <form onSubmit={handleSubmit} className="card">
-          <h3>{question.text}</h3>
-          <input
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Your answer"
-          />
-          <button type="submit">Submit</button>
-        </form>
-      ) : (
-        <div className="card">No questions due right now.</div>
-      )}
-
-      {showPath && (
-        <div style={{ marginTop: 12 }}>
-          <LearningPath token={token} />
-        </div>
-      )}
-
-      {showAI && (
-        <div style={{ marginTop: 12 }}>
-          <AIAssistant token={token} />
-        </div>
-      )}
     </div>
   );
 }

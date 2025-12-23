@@ -1,54 +1,33 @@
-<<<<<<< HEAD
-import React, { useState, useEffect } from 'react';
-import { getLearningPath, getModule, submit } from '../api';
-import { ChevronRight, CheckCircle, XCircle } from 'lucide-react';
-=======
 import React, { useState, useEffect } from "react";
-import { getLearningPath, getModule } from "../api";
-import { saveLessonOffline } from "../utils/lessonStorage";
->>>>>>> origin/zerda
+import { getLearningPath, getModule, submit, getAIExplanation, generateAIQuestion } from "../api";
 
 export default function LearningPath({ token }) {
   const [path, setPath] = useState(null);
   const [activeModule, setActiveModule] = useState(null);
   const [moduleContent, setModuleContent] = useState(null);
   const [loading, setLoading] = useState(false);
-<<<<<<< HEAD
+  const [error, setError] = useState("");
   const [activeQuestion, setActiveQuestion] = useState(null);
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
-=======
-  const [savedMsg, setSavedMsg] = useState("");
->>>>>>> origin/zerda
-
-  // ✅ Per-user language setting (stored on device)
-  const [languageCode, setLanguageCode] = useState(
-    localStorage.getItem("languageCode") || "en"
-  );
+  const [aiExplanation, setAiExplanation] = useState(null);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("languageCode", languageCode);
-    // Dil değişince learning path’i yeniden çekelim
-    loadPath(languageCode);
-    // açık modül varsa kapatalım (istersen kaldırabilirsin)
-    setModuleContent(null);
-    setActiveModule(null);
-  }, [languageCode]);
-
-  useEffect(() => {
-    loadPath(languageCode);
+    loadPath();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadPath(lang = languageCode) {
+  async function loadPath() {
     setLoading(true);
-    setSavedMsg("");
+    setError("");
     try {
-      const data = await getLearningPath(token, lang);
+      const data = await getLearningPath(token);
+      console.log('Learning path loaded:', data);
       setPath(data);
     } catch (e) {
-      console.error(e);
-      setSavedMsg("❌ Failed to load learning path.");
+      console.error('Failed to load learning path:', e);
+      setError("Failed to load learning path. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -58,283 +37,265 @@ export default function LearningPath({ token }) {
     setActiveModule(m);
     setActiveQuestion(null);
     setFeedback(null);
+    setAiExplanation(null);
     setLoading(true);
-<<<<<<< HEAD
-    try{
-      const moduleId = m._id || m.id;
-      console.log('🔍 Loading module:', moduleId);
-      const mod = await getModule(token, moduleId);
-      console.log('📦 Module data received:', mod);
-      console.log('   Items count:', mod?.items?.length || 0);
-      console.log('   Exercises count:', mod?.exercises?.length || 0);
-      if (mod?.items?.length > 0) {
-        console.log('   First item:', mod.items[0]);
-      }
-      setModuleContent(mod);
-    }catch(e){ 
-      console.error('❌ Error loading module:', e);
-      alert('Failed to load module. Check console for details.');
-    }
-    finally{ setLoading(false); }
-=======
-    setSavedMsg("");
+    setError("");
     try {
-      const mod = await getModule(token, m.id, languageCode);
+      console.log('Opening module:', m);
+      const mod = await getModule(token, m.id);
+      console.log('Module content loaded:', mod);
       setModuleContent(mod);
     } catch (e) {
-      console.error(e);
-      setSavedMsg("❌ Failed to open module.");
+      console.error('Failed to load module:', e);
+      setError("Failed to open module.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function downloadModule(m) {
-    setSavedMsg("");
-    try {
-      await saveLessonOffline(m.id, languageCode);
-      setSavedMsg(
-        `✅ Lesson saved for offline use (${languageCode}): ${m.title}`
-      );
-    } catch (e) {
-      console.error(e);
-      setSavedMsg("❌ Failed to save lesson offline.");
-    }
->>>>>>> origin/zerda
-  }
-
-  async function handleAnswerSubmit(e, item){
+  async function handleAnswerSubmit(e, item) {
     e.preventDefault();
-    if(!item.question) return;
+    if (!item.question) return;
     
-    const correct = (answer || '').trim().toLowerCase() === (item.question.answer || '').toLowerCase();
-    try{
+    const userAnswer = (answer || '').trim();
+    const correct = userAnswer.toLowerCase() === (item.question.answer || '').toLowerCase();
+    
+    try {
       const res = await submit(token, item.question._id, correct);
       setFeedback({
         correct: res.correct,
-        message: res.correct ? '✓ Correct!' : '✗ Incorrect. Try again!'
+        message: res.correct ? '✅ Correct! Great job!' : '❌ Incorrect. Try again!'
       });
       setAnswer('');
-      setTimeout(() => setFeedback(null), 2000);
-    }catch(e){
-      setFeedback({ correct: false, message: 'Failed to submit' });
+      
+      // Get AI explanation after answering incorrectly
+      if (!res.correct) {
+        getAIHelp(item.question.text);
+      }
+    } catch (e) {
+      console.error('Submit error:', e);
+      setFeedback({ correct: false, message: 'Failed to submit answer.' });
     }
   }
 
-  if (loading && !path) return <div style={{padding:'20px',textAlign:'center'}}>Loading...</div>;
-  if (!path) return <div style={{padding:'20px',textAlign:'center'}}>No learning path available.</div>;
+  async function getAIHelp(concept) {
+    setLoadingAI(true);
+    setAiExplanation(null);
+    try {
+      const result = await getAIExplanation(token, concept, 'intermediate');
+      setAiExplanation(result.explanation);
+    } catch (e) {
+      console.error('AI explanation error:', e);
+      setAiExplanation('AI explanation not available at this time.');
+    } finally {
+      setLoadingAI(false);
+    }
+  }
+
+  async function generatePracticeQuestion(skill, difficulty) {
+    setLoadingAI(true);
+    try {
+      const result = await generateAIQuestion(token, skill, difficulty, skill);
+      setActiveQuestion({
+        text: result.question,
+        answer: result.answer,
+        isAIGenerated: true
+      });
+    } catch (e) {
+      console.error('AI question generation error:', e);
+      setError('Failed to generate AI question.');
+    } finally {
+      setLoadingAI(false);
+    }
+  }
+
+  if (loading && !path) {
+    return (
+      <div className="learning-path-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading your personalized learning path...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !path) {
+    return (
+      <div className="learning-path-container">
+        <div className="error-message">
+          <p>{error}</p>
+          <button onClick={loadPath} className="btn-retry">Try Again</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!path) {
+    return (
+      <div className="learning-path-container">
+        <div className="empty-state">
+          <h3>No Learning Path Available</h3>
+          <p>Complete the initial assessment to generate your personalized learning path.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-<<<<<<< HEAD
-      <div style={{marginBottom:'20px'}}>
-        <h4 style={{marginBottom:'12px',color:'#667eea'}}>
-          Suggested Level: {path.suggestedLevel} | Your Ability: {path.theta.toFixed(2)}
-        </h4>
-        <p style={{color:'#666',marginBottom:'16px'}}>Recommended modules sorted by fit:</p>
-        <div style={{display:'grid',gap:'12px'}}>
-          {path.modules.map(m => {
-            const moduleId = m._id || m.id;
-            const activeModuleId = activeModule?._id || activeModule?.id;
-            const isActive = activeModuleId === moduleId;
-            
-            return (
-              <div key={moduleId} style={{
-                padding:'16px',
-                background:'#f9fafb',
-                borderRadius:'8px',
-                border: isActive ? '2px solid #667eea' : '1px solid #e0e0e0',
-                cursor:'pointer',
-                transition:'all 0.3s ease'
-              }}
-              onClick={()=>{
-                console.log('Module clicked:', m.title);
-                openModule(m);
-              }}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div>
-                    <strong style={{color:'#1a1a1a',fontSize:'16px'}}>{m.title}</strong>
-                    <div style={{color:'#666',fontSize:'14px',marginTop:'4px'}}>
-                      {m.skill} • Level {m.level}
-                    </div>
-                  </div>
-                  <ChevronRight size={20} color="#667eea" />
-                </div>
-              </div>
-            );
-          })}
+    <div className="learning-path-container">
+      <div className="learning-path-header">
+        <h2>🎯 Your AI-Powered Learning Path</h2>
+        <div className="path-stats">
+          <div className="stat-item">
+            <span className="stat-label">Your Level</span>
+            <span className="stat-value">{path.suggestedLevel || 'Beginner'}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Ability Score (θ)</span>
+            <span className="stat-value">{path.theta?.toFixed(2) || '0.00'}</span>
+          </div>
         </div>
       </div>
 
-      {moduleContent && (
-        <div style={{
-          background:'white',
-          padding:'24px',
-          borderRadius:'12px',
-          border:'1px solid #e0e0e0',
-          marginTop:'20px'
-        }}>
-          <h3 style={{color:'#1a1a1a',marginBottom:'8px'}}>{moduleContent.title}</h3>
-          <p style={{color:'#666',marginBottom:'20px'}}>{moduleContent.description}</p>
-          <h4 style={{color:'#667eea',marginBottom:'16px'}}>Practice Items</h4>
-          <div style={{display:'grid',gap:'16px'}}>
-            {(moduleContent.items || []).map((it, idx) => (
-              <div key={idx} style={{
-                padding:'16px',
-                background:'#f9fafb',
-                borderRadius:'8px',
-                border:'1px solid #e0e0e0'
-              }}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:'12px'}}>
-                  <strong style={{color:'#1a1a1a'}}>{it.title}</strong>
-                  <span style={{
-                    fontSize:'12px',
-                    padding:'4px 8px',
-                    background:'#fff3cd',
-                    color:'#856404',
-                    borderRadius:'4px',
-                    fontWeight:'600'
-                  }}>
-                    Difficulty: {it.difficulty?.toFixed(1) || 'N/A'}
-                  </span>
+      {error && <div className="error-banner">{error}</div>}
+
+      {!activeModule ? (
+        <div className="modules-grid">
+          <h3 className="section-title">Recommended Modules</h3>
+          <div className="modules-list">
+            {path.modules && path.modules.length > 0 ? (
+              path.modules.map((m) => (
+                <div key={m.id} className="module-card">
+                  <div className="module-header">
+                    <h4>{m.title}</h4>
+                    <span className="module-skill">{m.skill}</span>
+                  </div>
+                  <p className="module-level">Level {m.level}</p>
+                  <button 
+                    onClick={() => openModule(m)} 
+                    className="btn-open-module"
+                  >
+                    Start Module →
+                  </button>
+                  <button 
+                    onClick={() => generatePracticeQuestion(m.skill, m.level)}
+                    className="btn-ai-practice"
+                    disabled={loadingAI}
+                  >
+                    🤖 AI Practice
+                  </button>
                 </div>
-                
-                {it.question ? (
-                  <div>
-                    <p style={{color:'#333',marginBottom:'12px',fontStyle:'italic'}}>
-                      Q: {it.question.text}
-                    </p>
-                    <form onSubmit={(e) => handleAnswerSubmit(e, it)} style={{display:'flex',gap:'8px',alignItems:'center'}}>
-                      <input 
-                        type="text"
-                        value={activeQuestion === idx ? answer : ''}
-                        onChange={(e) => {
-                          setActiveQuestion(idx);
-                          setAnswer(e.target.value);
-                        }}
-                        onFocus={() => setActiveQuestion(idx)}
-                        placeholder="Your answer..."
-                        style={{
-                          flex:1,
-                          padding:'10px 12px',
-                          border:'2px solid #e0e0e0',
-                          borderRadius:'6px',
-                          fontSize:'14px'
-                        }}
-                      />
-                      <button type="submit" style={{
-                        padding:'10px 20px',
-                        background:'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        color:'white',
-                        border:'none',
-                        borderRadius:'6px',
-                        fontWeight:'600',
-                        cursor:'pointer',
-                        display:'flex',
-                        alignItems:'center',
-                        gap:'6px'
-                      }}>
-                        Submit
-                        <ChevronRight size={16} />
-                      </button>
-                    </form>
-                    {feedback && activeQuestion === idx && (
-                      <div style={{
-                        marginTop:'8px',
-                        padding:'8px 12px',
-                        background: feedback.correct ? '#d4edda' : '#f8d7da',
-                        color: feedback.correct ? '#155724' : '#721c24',
-                        borderRadius:'6px',
-                        fontSize:'14px',
-                        fontWeight:'600',
-                        display:'flex',
-                        alignItems:'center',
-                        gap:'8px'
-                      }}>
-                        {feedback.correct ? <CheckCircle size={16} /> : <XCircle size={16} />}
-                        {feedback.message}
+              ))
+            ) : (
+              <p className="no-modules">No modules available yet.</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="module-content">
+          <button onClick={() => {
+            setActiveModule(null);
+            setModuleContent(null);
+            setActiveQuestion(null);
+            setFeedback(null);
+            setAiExplanation(null);
+          }} className="btn-back">
+            ← Back to Modules
+          </button>
+
+          <div className="module-detail">
+            <h3>{moduleContent?.title || activeModule.title}</h3>
+            <p className="module-description">{moduleContent?.description || ''}</p>
+
+            {moduleContent?.items && moduleContent.items.length > 0 ? (
+              <div className="questions-list">
+                <h4>Practice Questions</h4>
+                {moduleContent.items.map((item, index) => (
+                  <div key={item.id || index} className="question-item">
+                    <div className="question-header">
+                      <span className="question-number">#{index + 1}</span>
+                      <span className="question-type">{item.type}</span>
+                      <span className="question-difficulty">Difficulty: {item.difficulty}</span>
+                    </div>
+                    {item.question ? (
+                      <div className="question-content">
+                        <p className="question-text">{item.question.text}</p>
+                        <form onSubmit={(e) => handleAnswerSubmit(e, item)}>
+                          <input
+                            type="text"
+                            value={answer}
+                            onChange={(e) => setAnswer(e.target.value)}
+                            placeholder="Your answer..."
+                            className="question-input"
+                          />
+                          <button type="submit" className="btn-submit-answer">
+                            Submit Answer
+                          </button>
+                        </form>
+                        {feedback && (
+                          <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`}>
+                            {feedback.message}
+                          </div>
+                        )}
+                        {!feedback && (
+                          <button
+                            onClick={() => getAIHelp(item.question.text)}
+                            className="btn-ai-help"
+                            disabled={loadingAI}
+                          >
+                            {loadingAI ? 'Loading...' : '💡 Get AI Help'}
+                          </button>
+                        )}
                       </div>
+                    ) : (
+                      <p className="no-question">Question not available</p>
                     )}
                   </div>
-                ) : (
-                  <p style={{color:'#999',fontSize:'14px'}}>No question linked to this item</p>
-                )}
+                ))}
               </div>
-=======
-      <div className="card" style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <label htmlFor="lang" style={{ fontWeight: 600 }}>
-            Language:
-          </label>
-          <select
-            id="lang"
-            value={languageCode}
-            onChange={(e) => setLanguageCode(e.target.value)}
-          >
-            <option value="en">English</option>
-            <option value="tr">Turkish</option>
-          </select>
-          <span style={{ opacity: 0.7 }}>(saved per user/device)</span>
+            ) : (
+              <p className="no-questions">No questions in this module yet.</p>
+            )}
+
+            {aiExplanation && (
+              <div className="ai-explanation">
+                <h4>🤖 AI Explanation</h4>
+                <p>{aiExplanation}</p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="card">
-        <h3>
-          Suggested level: {path.suggestedLevel} — theta:{" "}
-          {path.theta?.toFixed ? path.theta.toFixed(2) : path.theta}
-        </h3>
-
-        {savedMsg && <p style={{ marginTop: 10 }}>{savedMsg}</p>}
-
-        <p>Recommended modules (sorted by fit):</p>
-        <ul>
-          {path.modules.map((m) => (
-            <li key={m.id} style={{ margin: "8px 0" }}>
-              <strong>{m.title}</strong> — {m.skill} (level {m.level})
-              <div style={{ marginTop: 6 }}>
-                <button onClick={() => openModule(m)}>Open Module</button>
-
-                <button
-                  onClick={() => downloadModule(m)}
-                  style={{ marginLeft: 8 }}
-                >
-                  Download Lesson
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {moduleContent && (
-        <div className="card" style={{ marginTop: 12 }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <h3 style={{ margin: 0 }}>{moduleContent.title}</h3>
-
-            <button onClick={() => downloadModule(activeModule)}>
-              Download this module
-            </button>
-          </div>
-
-          <p>{moduleContent.description}</p>
-
-          <h4>Items</h4>
-          <ol>
-            {moduleContent.items.map((it) => (
-              <li key={it.id} style={{ margin: "8px 0" }}>
-                <strong>{it.title}</strong> — {it.type} — difficulty:{" "}
-                {it.difficulty}
-                <div style={{ marginTop: 6 }}>
-                  {it.question ? (
-                    <em>Q: {it.question.text}</em>
-                  ) : (
-                    <em>No linked question</em>
-                  )}
-                </div>
-              </li>
->>>>>>> origin/zerda
-            ))}
-          </div>
+      {activeQuestion && activeQuestion.isAIGenerated && (
+        <div className="ai-generated-question">
+          <h4>🤖 AI Generated Practice Question</h4>
+          <p className="question-text">{activeQuestion.text}</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const correct = answer.toLowerCase().trim() === activeQuestion.answer.toLowerCase().trim();
+            setFeedback({
+              correct,
+              message: correct ? '✅ Correct!' : `❌ The answer is: ${activeQuestion.answer}`
+            });
+            setAnswer('');
+          }}>
+            <input
+              type="text"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              placeholder="Your answer..."
+              className="question-input"
+            />
+            <button type="submit" className="btn-submit-answer">Submit</button>
+          </form>
+          {feedback && (
+            <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`}>
+              {feedback.message}
+            </div>
+          )}
+          <button onClick={() => setActiveQuestion(null)} className="btn-close">Close</button>
         </div>
       )}
     </div>
