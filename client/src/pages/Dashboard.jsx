@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { checkNeedsGeneration } from '../api';
-import { LogOut, BookOpen, User, Users, Shield } from 'lucide-react';
-import LearningPath from './LearningPath';
-import InitialPathGenerator from '../components/InitialPathGenerator';
+import { getNextQuestion, submit, seed } from '../api';
 
 export default function Dashboard({ token, user, onLogout }){
-  const navigate = useNavigate();
-  const [needsPathGeneration, setNeedsPathGeneration] = useState(false);
-  const [generatedPath, setGeneratedPath] = useState(null);
-  const [checkingPath, setCheckingPath] = useState(true);
+  const [question, setQuestion] = useState(null);
+  const [answer, setAnswer] = useState('');
+  const [status, setStatus] = useState(null);
 
   const checkInitialPath = async () => {
     try {
@@ -71,61 +66,18 @@ export default function Dashboard({ token, user, onLogout }){
     );
   }
 
-  return (
-    <div className="dashboard-container">
-      {/* Dashboard Header */}
-      <header className="dashboard-header">
-        <div className="dashboard-header-content">
-          <div>
-            <h1>Welcome back, <span className="gradient-text">{user?.username}</span>!</h1>
-            <p className="header-subtitle">Continue your English learning journey</p>
-          </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button 
-              className="logout-btn" 
-              onClick={() => navigate('/account')}
-              style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-            >
-              <User size={20} />
-              Account
-            </button>
-            {(user?.role === 'teacher' || user?.role === 'admin') && (
-              <button 
-                className="logout-btn" 
-                onClick={() => navigate('/teacher')}
-                style={{ background: 'rgba(79, 172, 254, 0.2)' }}
-              >
-                <Users size={20} />
-                Teacher
-              </button>
-            )}
-            {user?.role === 'admin' && (
-              <button 
-                className="logout-btn" 
-                onClick={() => navigate('/admin')}
-                style={{ background: 'rgba(240, 147, 251, 0.2)' }}
-              >
-                <Shield size={20} />
-                Admin
-              </button>
-            )}
-            <button className="logout-btn" onClick={onLogout}>
-              <LogOut size={20} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+  // FR23: Support sayfası gösteriliyorsa, onu render et
+  if (showSupport) {
+    return <Support token={token} onBack={() => setShowSupport(false)} />;
+  }
 
-      {/* Main Content */}
-      <div className="dashboard-main">
-        {/* Learning Path */}
-        <div className="learning-path-container">
-          <div className="learning-path-header">
-            <h3>Your Learning Path</h3>
-            <BookOpen size={20} color="#667eea" />
-          </div>
-          <LearningPath token={token} />
+  return (
+    <div className="container">
+      <div className="top">
+        <h2>Welcome, {user?.username}</h2>
+        <div>
+          <button onClick={onLogout}>Logout</button>
+          <button onClick={async ()=>{ await seed(); await load(); }}>Seed</button>
         </div>
       </div>
     </div>

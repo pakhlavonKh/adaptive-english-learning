@@ -244,7 +244,8 @@ app.get('/api/analytics/progress/:userId', async (req, res) => {
   }
 });
 
-// ===== NOTIFICATION ENDPOINTS =====
+// ===== NOTIFICATION ENDPOINTS (FR17 & UC16) =====
+// Legacy endpoints (kept for backward compatibility)
 app.get('/api/notifications/:userId', (req, res) => {
   try {
     const unread = notificationService.getUnreadNotifications(req.params.userId);
@@ -269,6 +270,143 @@ app.post('/api/notifications/:userId/mark-read/:notificationId', (req, res) => {
     res.json({ success });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// New token-based notification endpoints
+app.get('/api/notifications/unread', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const unread = notificationService.getUnreadNotifications(userId);
+    res.json({ count: unread.length, notifications: unread });
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+app.get('/api/notifications/all', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const all = notificationService.getAllNotifications(userId);
+    res.json({ notifications: all });
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+app.post('/api/notifications/:notificationId/read', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const { notificationId } = req.params;
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const success = notificationService.markAsRead(userId, parseInt(notificationId));
+    res.json({ success });
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+app.post('/api/notifications/mark-all-read', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const count = notificationService.markAllAsRead(userId);
+    res.json({ success: true, markedCount: count });
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+// UC16: Notification preferences
+app.get('/api/notifications/preferences', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const prefs = notificationService.getUserPreferences(userId);
+    res.json(prefs);
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+app.post('/api/notifications/preferences', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const { emailEnabled, pushEnabled, inAppEnabled } = req.body;
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const updated = notificationService.updateUserPreferences(userId, {
+      emailEnabled,
+      pushEnabled,
+      inAppEnabled
+    });
+    res.json({ success: true, preferences: updated });
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+// ===== SUPPORT SYSTEM (FR23) =====
+if (!global.supportTickets) global.supportTickets = [];
+
+app.post('/api/support/tickets', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const { subject, message, priority } = req.body;
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    const ticket = {
+      id: Date.now().toString(),
+      userId,
+      username: user.username,
+      subject: subject || 'No Subject',
+      message: message || '',
+      status: 'open',
+      priority: priority || 'normal',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    global.supportTickets.push(ticket);
+    console.log(`[Support] 🎫 New ticket created: #${ticket.id} by ${user.username}`);
+    
+    // Send confirmation notification
+    notificationService.sendReviewReminder(userId, `Your support ticket #${ticket.id} has been received`);
+    
+    res.json({ 
+      success: true, 
+      ticket: { id: ticket.id, status: ticket.status },
+      message: 'Your support request has been received. We will get back to you shortly.'
+    });
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+app.get('/api/support/tickets', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    
+    const userTickets = global.supportTickets
+      .filter(t => t.userId === userId)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json({ tickets: userTickets });
+  } catch (e) {
+    res.status(401).json({ error: 'Unauthorized' });
   }
 });
 

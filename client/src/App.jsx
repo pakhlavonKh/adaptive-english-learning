@@ -4,111 +4,73 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+// 1. ADIM: Bileşeni buraya import ediyoruz
+import NotificationList from './components/Notifications/NotificationList';
 import Account from './pages/Account';
 import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
-// Protected Route Wrapper
-function ProtectedRoute({ token, children }) {
-  return token ? children : <Navigate to="/login" replace />;
-}
-
-// Role-based Route Wrapper
-function RoleRoute({ token, user, allowedRoles, children }) {
-  if (!token) return <Navigate to="/login" replace />;
-  if (!allowedRoles.includes(user?.role || 'student')) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return children;
-}
-
-// Auth Wrapper Component
-function AuthPages() {
+export default function App() {
+  const [page, setPage] = useState('landing');
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(() => {
     const u = localStorage.getItem('user');
     return u ? JSON.parse(u) : null;
   });
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-  };
+  useEffect(() => {
+    const t = localStorage.getItem('token');
+    if (t) {
+      setToken(t);
+      setPage('dashboard');
+    }
+  }, []);
 
-  return (
+  // 2. ADIM: Giriş yapılmışsa (Token varsa) hem Bildirimleri hem Dashboard'u göster
+  // React'te birden fazla bileşeni aynı anda döndürmek için <> ... </> (Fragment) içine almamız gerekir.
+  if (token) return (
     <>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route 
-          path="/login" 
-          element={<Login />}
-        />
-        <Route 
-          path="/register" 
-          element={<Register />}
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute token={token}>
-              <Dashboard 
-                token={token} 
-                user={user} 
-                onLogout={handleLogout}
-              />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/account" 
-          element={
-            <ProtectedRoute token={token}>
-              <Account 
-                token={token} 
-                user={user} 
-                onLogout={handleLogout}
-              />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/teacher" 
-          element={
-            <RoleRoute token={token} user={user} allowedRoles={['teacher', 'admin']}>
-              <TeacherDashboard 
-                token={token} 
-                user={user} 
-                onLogout={handleLogout}
-              />
-            </RoleRoute>
-          } 
-        />
-        <Route 
-          path="/admin" 
-          element={
-            <RoleRoute token={token} user={user} allowedRoles={['admin']}>
-              <AdminDashboard 
-                token={token} 
-                user={user} 
-                onLogout={handleLogout}
-              />
-            </RoleRoute>
-          } 
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <NotificationList />
+      <Dashboard 
+        token={token} 
+        user={user} 
+        onLogout={() => { 
+          localStorage.removeItem('token'); 
+          localStorage.removeItem('user'); 
+          setToken(null); 
+          setUser(null); 
+          setPage('landing'); 
+        }} 
+      />
     </>
   );
 }
 
-export default function App() {
+  if (page === 'landing') return <Landing onGetStarted={() => setPage('login')} />;
+
   return (
-    <div className="app-root">
-      <Router>
-        <AuthPages />
-      </Router>
+    <div className="container">
+      {/* 3. ADIM: Login/Register ekranlarında da görünmesi için buraya ekliyoruz */}
+      <NotificationList />
+      
+      <h1>Adaptive English</h1>
+      <div className="auth">
+        {page === 'login' ? (
+          <Login 
+            onLogin={(t,u)=>{
+              localStorage.setItem('token', t); 
+              localStorage.setItem('user', JSON.stringify(u)); 
+              setToken(t); 
+              setUser(u);
+            }}
+            onSwitchToRegister={() => setPage('register')}
+          />
+        ) : (
+          <Register 
+            onSwitchToLogin={() => setPage('login')}
+          />
+        )}
+      </div>
+      <button className="back-button" onClick={() => setPage('landing')}>← Back</button>
     </div>
   );
-}
