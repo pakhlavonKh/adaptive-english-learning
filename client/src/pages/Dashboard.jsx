@@ -3,6 +3,7 @@ import { getNextQuestion, submit, seed, checkNeedsGeneration } from '../api';
 import LearningPath from './LearningPath';
 import InitialPathGenerator from '../components/InitialPathGenerator';
 import Support from './Support';
+import AIAssistant from '../components/AIAssistant';
 
 function getLanguageCode() {
   return localStorage.getItem("languageCode") || "en";
@@ -26,6 +27,7 @@ export default function Dashboard({ token, user, onLogout }) {
   const [generatedPath, setGeneratedPath] = useState(null);
   const [showSupport, setShowSupport] = useState(false);
   const [showPath, setShowPath] = useState(false);
+  const [showAI, setShowAI] = useState(false);
 
   const load = async () => {
     try {
@@ -158,6 +160,13 @@ export default function Dashboard({ token, user, onLogout }) {
             {showPath ? 'Hide' : 'View'} Learning Path
           </button>
           <button onClick={() => setShowSupport(true)}>Support</button>
+          <button onClick={() => setShowAI((s) => !s)} style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            border: 'none'
+          }}>
+            🤖 {showAI ? 'Hide' : 'Show'} AI Assistant
+          </button>
         </div>
       </div>
 
@@ -180,6 +189,12 @@ export default function Dashboard({ token, user, onLogout }) {
       {showPath && (
         <div style={{ marginTop: 12 }}>
           <LearningPath token={token} />
+        </div>
+      )}
+
+      {showAI && (
+        <div style={{ marginTop: 12 }}>
+          <AIAssistant token={token} />
         </div>
       )}
     </div>

@@ -23,6 +23,7 @@ import * as analyticsService from './services/analyticsService.js';
 import * as notificationService from './services/notificationService.js';
 import * as pathGenerationService from './services/pathGenerationService.js';
 import * as dataCollectionService from './services/dataCollectionService.js';
+import aiService from './services/aiService.js';
 
 const app = express();
 // const prisma = new PrismaClient();
@@ -143,7 +144,22 @@ app.post('/api/submit', async (req, res) => {
     user.theta = newTheta;
     await user.save();
 
-    res.json({ newTheta, correct, nextReview });
+    // Generate AI feedback if enabled
+    let aiFeedback = null;
+    if (process.env.GEMINI_API_KEY && process.env.ENABLE_AI_FEEDBACK === 'true') {
+      try {
+        aiFeedback = await aiService.generateFeedback(
+          question.text,
+          req.body.userAnswer || '',
+          question.answer,
+          correct
+        );
+      } catch (err) {
+        console.error('AI feedback generation failed:', err);
+      }
+    }
+
+    res.json({ newTheta, correct, nextReview, aiFeedback });
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
   }
@@ -791,8 +807,121 @@ app.get('/api/training-data/batch/:batchNumber', async (req, res) => {
   }
 });
 
+// ===== AI ENDPOINTS =====
+
+// Get AI-powered explanation for a concept
+app.post('/api/ai/explain', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const { concept, level } = req.body;
+
+    if (!concept) {
+      return res.status(400).json({ error: 'Concept is required' });
+    }
+
+    const explanation = await aiService.explainConcept(concept, level || 'intermediate');
+    res.json({ explanation, concept });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Generate AI practice question
+app.post('/api/ai/generate-question', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const { topic, difficulty, skillType } = req.body;
+
+    if (!topic) {
+      return res.status(400).json({ error: 'Topic is required' });
+    }
+
+    const question = await aiService.generateQuestion(
+      topic,
+      difficulty || 'intermediate',
+      skillType || 'vocabulary'
+    );
+    res.json(question);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get AI learning analysis
+app.get('/api/ai/analyze-progress', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const responses = await ResponseModel.find({ user: userId }).lean();
+    const analysis = await aiService.analyzeLearningPattern(responses, user.theta);
+    
+    res.json({ 
+      analysis,
+      stats: {
+        totalQuestions: responses.length,
+        correctCount: responses.filter(r => r.correct).length,
+        currentLevel: user.theta
+      }
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Generate conversation practice
+app.post('/api/ai/conversation', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const { topic, level } = req.body;
+
+    if (!topic) {
+      return res.status(400).json({ error: 'Topic is required' });
+    }
+
+    const conversation = await aiService.generateConversation(topic, level || 'intermediate');
+    res.json({ conversation, topic });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// AI writing correction
+app.post('/api/ai/correct-writing', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const { text, focusArea } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    const correction = await aiService.correctWriting(text, focusArea || 'general');
+    res.json({ correction, originalText: text });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Start server
 app.listen(4000, () => {
   console.log('Server running on http://localhost:4000');
   console.log('Seed questions: GET /api/seed');
+  console.log('AI Features:', process.env.GEMINI_API_KEY ? '✓ Enabled' : '✗ Disabled (add GEMINI_API_KEY to .env)');
 });
