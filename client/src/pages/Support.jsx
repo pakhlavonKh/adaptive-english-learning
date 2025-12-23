@@ -434,6 +434,18 @@ export default function Support({ token, onBack }) {
                       ? ticket.message.substring(0, 150) + '...' 
                       : ticket.message}
                   </p>
+
+                  {ticket.status === 'open' && (
+  <button 
+    onClick={async () => {
+      await resolveSupportTicket(token, ticket.id);
+      loadTickets(); // Listeyi yenile
+    }}
+    style={{ background: '#4caf50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '5px 10px' }}
+  >
+    Mark as Resolved
+  </button>
+)}
                   
                   <div style={styles.ticketMeta}>
                     <span>🏷️ Priority: {getPriorityText(ticket.priority)}</span>
