@@ -7,16 +7,58 @@ import models.Student;
 import models.Role; // <--- This was missing!
 import java.util.UUID;
 
+import infrastructure.IOAuthProvider;
+
 public class UserService {
     private Database db;
     private EmailSystem emailSystem;
     private IExternalDataGateway externalGateway;
 
-    public UserService(Database db, EmailSystem emailSystem, IExternalDataGateway gateway) {
-        this.db = db;
-        this.emailSystem = emailSystem;
-        this.externalGateway = gateway;
-    }
+    private IOAuthProvider authProvider; //
+
+    // Update Constructor to accept the new Auth Provider
+        public UserService(Database db, EmailSystem emailSystem, IExternalDataGateway gateway, IOAuthProvider authProvider) {
+            this.db = db;
+            this.emailSystem = emailSystem;
+            this.externalGateway = gateway;
+            this.authProvider = authProvider;
+        }
+        // NEW: UC2 - Authenticate via OAuth
+        public Student loginWithOAuth(String token) {
+            // 1. Verify token with Google (Infrastructure)
+            String email = authProvider.verifyTokenAndGetEmail(token);
+            
+            if (email == null) {
+                System.out.println("[OAuth] Authentication failed: Invalid Token.");
+                return null;
+            }
+
+            // 2. Check if user exists (Auto-Registration Logic)
+            Student existingUser = db.findUserByEmail(email);
+
+            if (existingUser != null) {
+                System.out.println("[OAuth] User found. Logging in: " + existingUser.username);
+                return existingUser;
+            } else {
+                // 3. User is new -> Auto-Register
+                System.out.println("[OAuth] New user detected. Creating account automatically...");
+                
+                // Create user with no password (null) and "GOOGLE" provider
+                Student newUser = new Student("Google User", email, null);
+                newUser.studentId = UUID.randomUUID().toString();
+                newUser.status = "ACTIVE"; // Google emails are already verified
+                newUser.authProvider = "GOOGLE";
+                
+                // Save to DB
+                db.saveUser(newUser);
+                
+                // Sync Data immediately (FR1 Requirement)
+                String scores = externalGateway.fetchStudentScores(newUser.studentId);
+                db.saveProficiencyProfile(newUser.studentId, scores);
+
+                return newUser;
+            }
+        }
 
     public boolean registerUser(String username, String email, String password) {
         if (db.emailExists(email)) {
