@@ -6,62 +6,62 @@ const questions = {
         // Fill-in-the-blank with choices (first 5)
         {
             type: 'fill-in-the-blank',
-            question: '🏠 The place where you live is called a _____.',
+            question: 'ðŸ  The place where you live is called a _____.',
             options: ['house', 'car', 'park', 'store'],
             answer: 'house'
         },
         {
             type: 'fill-in-the-blank',
-            question: '🌈 Complete: The color of grass is _____.',
+            question: 'ðŸŒˆ Complete: The color of grass is _____.',
             options: ['green', 'blue', 'red', 'yellow'],
             answer: 'green'
         },
         {
             type: 'fill-in-the-blank',
-            question: '☕ Fill in: I drink _____ every morning.',
+            question: 'â˜• Fill in: I drink _____ every morning.',
             options: ['coffee', 'tea', 'water', 'milk'],
             answer: 'coffee'
         },
         {
             type: 'fill-in-the-blank',
-            question: '🍎 The opposite of "small" is _____.',
+            question: 'ðŸŽ The opposite of "small" is _____.',
             options: ['large', 'big', 'tiny', 'huge'],
             answer: 'large'
         },
         {
             type: 'fill-in-the-blank',
-            question: '😊 Complete: I am _____ today.',
+            question: 'ðŸ˜Š Complete: I am _____ today.',
             options: ['happy', 'sad', 'angry', 'tired'],
             answer: 'happy'
         },
         // Multiple-choice (second 5)
         {
             type: 'multiple-choice',
-            question: '📓 Which sentence is grammatically correct?',
+            question: 'ðŸ““ Which sentence is grammatically correct?',
             options: ['They is playing', 'They are playing', 'They am playing', 'They be playing'],
             answer: 'They are playing'
         },
         {
             type: 'multiple-choice',
-            question: '💬 What is a polite way to greet someone?',
+            question: 'ðŸ’¬ What is a polite way to greet someone?',
             options: ['Go away', 'Hello, how are you?', 'Be quiet', 'Leave me alone'],
             answer: 'Hello, how are you?'
         },
         {
             type: 'multiple-choice',
-            question: '🎓 What is the plural of "child"?',
+            question: 'ðŸŽ“ What is the plural of "child"?',
             options: ['childs', 'childes', 'children', 'childern'],
             answer: 'children'
         },
         {
             type: 'multiple-choice',
-            question: '❄️ Complete: Water freezes at _____ degrees Celsius.',
+            question: 'â„ï¸ Complete: Water freezes at _____ degrees Celsius.',
             options: ['0', '10', '20', '100'],
             answer: '0'
         },
         {
             type: 'multiple-choice',
-            question: '🏃 He _____ very fast.',
+            question: 'ðŸƒ He _____ very fast.',
             options: ['run', 'runs', 'running', 'ran'],
             answer: 'runs'
         }
@@ -70,62 +70,62 @@ const questions = {
         // Fill-in-the-blank with choices (first 5)
         {
             type: 'fill-in-the-blank',
-            question: '💬 A polite greeting in English is _____.',
+            question: 'ðŸ’¬ A polite greeting in English is _____.',
             options: ['Good morning', 'Whatever', 'Shh', 'Go away'],
             answer: 'Good morning'
         },
         {
             type: 'fill-in-the-blank',
-            question: '📚 They have _____ studying English for 3 years.',
+            question: 'ðŸ“š They have _____ studying English for 3 years.',
             options: ['been', 'are', 'was', 'have'],
             answer: 'been'
         },
         {
             type: 'fill-in-the-blank',
-            question: '🎭 Complete: The actor\'s _____ was brilliant in the film.',
+            question: 'ðŸŽ­ Complete: The actor\'s _____ was brilliant in the film.',
             options: ['performance', 'appearance', 'voice', 'movement'],
             answer: 'performance'
         },
         {
             type: 'fill-in-the-blank',
-            question: '💼 What does "collaborate" mean?',
+            question: 'ðŸ’¼ What does "collaborate" mean?',
             options: ['To work against', 'To work together', 'To compete', 'To ignore'],
             answer: 'To work together'
         },
         {
             type: 'fill-in-the-blank',
-            question: '🌍 The _____ of the problem requires careful analysis.',
+            question: 'ðŸŒ The _____ of the problem requires careful analysis.',
             options: ['complexity', 'size', 'speed', 'color'],
             answer: 'complexity'
         },
         // Multiple-choice (second 5)
         {
             type: 'multiple-choice',
-            question: '✈️ Choose the correct sentence:',
+            question: 'âœˆï¸ Choose the correct sentence:',
             options: ['Unless you will come, I stay home', 'Unless you come, I will stay home', 'Unless you come, I stay home', 'Unless you are coming, I will stay'],
             answer: 'Unless you come, I will stay home'
         },
         {
             type: 'multiple-choice',
-            question: '🏫 Which word is a synonym for "diligent"?',
+            question: 'ðŸ« Which word is a synonym for "diligent"?',
             options: ['Lazy', 'Hardworking', 'Careless', 'Slow'],
             answer: 'Hardworking'
         },
         {
             type: 'multiple-choice',
-            question: '🎓 What is the past participle of "write"?',
+            question: 'ðŸŽ“ What is the past participle of "write"?',
             options: ['wrote', 'writing', 'written', 'writes'],
             answer: 'written'
         },
         {
             type: 'multiple-choice',
-            question: '📝 Which sentence uses the correct tense?',
+            question: 'ðŸ“ Which sentence uses the correct tense?',
             options: ['I have see the movie', 'I have saw the movie', 'I have seen the movie', 'I saw seeing the movie'],
             answer: 'I have seen the movie'
         },
         {
             type: 'multiple-choice',
-            question: '🌐 What does "eloquent" mean?',
+            question: 'ðŸŒ What does "eloquent" mean?',
             options: ['Quiet', 'Fluent and persuasive in speaking', 'Angry', 'Confused'],
             answer: 'Fluent and persuasive in speaking'
         }
@@ -134,62 +134,62 @@ const questions = {
         // Fill-in-the-blank with choices (first 5)
         {
             type: 'fill-in-the-blank',
-            question: '⏳ What does "ephemeral" precisely mean?',
+            question: 'â³ What does "ephemeral" precisely mean?',
             options: ['Lasting a very short time', 'Permanent and unchanging', 'Loudly audible', 'Brilliantly shining'],
             answer: 'Lasting a very short time'
         },
         {
             type: 'fill-in-the-blank',
-            question: '🏫 The antonym of "benevolent" is _____.',
+            question: 'ðŸ« The antonym of "benevolent" is _____.',
             options: ['malevolent', 'kind', 'generous', 'caring'],
             answer: 'malevolent'
         },
         {
             type: 'fill-in-the-blank',
-            question: '✨ "Quintessential" best exemplifies the _____ form of something.',
+            question: 'âœ¨ "Quintessential" best exemplifies the _____ form of something.',
             options: ['most typical', 'most unique', 'most rare', 'most common'],
             answer: 'most typical'
         },
         {
             type: 'fill-in-the-blank',
-            question: '⚠️ Select the best definition of "pernicious":',
+            question: 'âš ï¸ Select the best definition of "pernicious":',
             options: ['Harmful or destructive, often in subtle ways', 'Completely harmless', 'Readily apparent', 'Fleeting in nature'],
             answer: 'Harmful or destructive, often in subtle ways'
         },
         {
             type: 'fill-in-the-blank',
-            question: '📝 In "She has been working since 2010," identify the verb tense: _____.',
+            question: 'ðŸ“ In "She has been working since 2010," identify the verb tense: _____.',
             options: ['present perfect continuous', 'simple present', 'present perfect', 'present progressive'],
             answer: 'present perfect continuous'
         },
         // Multiple-choice (second 5)
         {
             type: 'multiple-choice',
-            question: '💬 Which idiom means to be ungrateful to someone who helped you?',
+            question: 'ðŸ’¬ Which idiom means to be ungrateful to someone who helped you?',
             options: ['Break a leg', 'Bite the hand that feeds you', 'Hit the nail on the head', 'Barking up the wrong tree'],
             answer: 'Bite the hand that feeds you'
         },
         {
             type: 'multiple-choice',
-            question: '📚 What does "obfuscate" mean?',
+            question: 'ðŸ“š What does "obfuscate" mean?',
             options: ['To clarify', 'To make obscure or unclear', 'To enlighten', 'To simplify'],
             answer: 'To make obscure or unclear'
         },
         {
             type: 'multiple-choice',
-            question: '🎓 Which word best describes someone who is "pragmatic"?',
+            question: 'ðŸŽ“ Which word best describes someone who is "pragmatic"?',
             options: ['Idealistic', 'Practical and realistic', 'Theoretical', 'Impractical'],
             answer: 'Practical and realistic'
         },
         {
             type: 'multiple-choice',
-            question: '🔬 What is the meaning of "serendipitous"?',
+            question: 'ðŸ”¬ What is the meaning of "serendipitous"?',
             options: ['Planned', 'Occurring by luck or chance in a happy way', 'Unfortunate', 'Deliberate'],
             answer: 'Occurring by luck or chance in a happy way'
         },
         {
             type: 'multiple-choice',
-            question: '💡 Which sentence uses the subjunctive mood correctly?',
+            question: 'ðŸ’¡ Which sentence uses the subjunctive mood correctly?',
             options: ['If I was rich, I would travel', 'If I were rich, I will travel', 'If I were rich, I would travel', 'If I was rich, I will travel'],
             answer: 'If I were rich, I would travel'
         },
@@ -217,6 +217,52 @@ const submissionDatabase = {
         return record;
     }
 };
+
+// Integrity log for suspicious attempts
+const integrityDatabase = {
+    attempts: [],
+    save(record) {
+        this.attempts.push(record);
+        return record;
+    }
+};
+
+// Integrity checks applied before grading
+const IntegrityService = (() => {
+    const suspiciousTimeMs = 2000;
+
+    function isComplexQuestion(question) {
+        if (!question) return false;
+        if (question.type === 'free-text') return true;
+        if (question.evaluationType === 'semantic') return true;
+        return question.difficultyLevel === 'hard' || userLevel === 'hard';
+    }
+
+    function evaluateAttempt(question, metadata = {}) {
+        const reasons = [];
+        const elapsedMs = typeof metadata.responseTimeMs === 'number' ? metadata.responseTimeMs : null;
+
+        if (isComplexQuestion(question) && elapsedMs !== null && elapsedMs < suspiciousTimeMs) {
+            reasons.push('Answered complex question in under 2 seconds.');
+        }
+
+        if (metadata.voiceprintMatch === false) {
+            reasons.push('Voiceprint does not match the login profile.');
+        }
+
+        const flagged = reasons.length > 0;
+        return {
+            flagged,
+            reasons,
+            elapsedMs
+        };
+    }
+
+    return {
+        evaluateAttempt,
+        getSuspiciousTimeMs: () => suspiciousTimeMs
+    };
+})();
 
 // Lightweight NLP service that scores responses for completeness and coherence
 const NLPService = {
@@ -246,7 +292,7 @@ const NLPService = {
         if (grade < 40) {
             feedback = 'Add more detail and structure so the system can understand your strategy.';
         } else if (grade < 70) {
-            feedback = 'Good start—expand on your examples and connect the ideas more clearly.';
+            feedback = 'Good startâ€”expand on your examples and connect the ideas more clearly.';
         }
 
         return {
@@ -314,6 +360,49 @@ const GradingService = (() => {
     };
 })();
 
+// Speech-to-text service with a local transcript fallback
+const SpeechToTextService = {
+    async transcribeAudio(audioBlob, providedTranscript) {
+        const transcript = (providedTranscript || '').trim();
+        if (transcript) {
+            return transcript;
+        }
+        if (!audioBlob) {
+            return '';
+        }
+        // No offline STT available in this demo; expect transcript from browser speech recognition.
+        return '';
+    }
+};
+
+// Assessment controller for speaking submissions
+const AssessmentController = {
+    // Endpoint: POST /assessment/submit-audio
+    async submitAudio(audioBlob, providedTranscript, metadata = {}) {
+        const transcript = await SpeechToTextService.transcribeAudio(audioBlob, providedTranscript);
+        const grading = gradeSpeakingResponse(transcript);
+        const integrity = IntegrityService.evaluateAttempt({ type: 'audio-prompt' }, metadata);
+        if (integrity.flagged) {
+            integrityDatabase.save({
+                id: `audio-${Date.now()}`,
+                type: 'audio-prompt',
+                reasons: integrity.reasons,
+                responseTimeMs: integrity.elapsedMs,
+                createdAt: new Date().toISOString()
+            });
+        }
+        return {
+            status: 'graded',
+            transcript,
+            expectedPhrase: grading.expectedPhrase,
+            similarity: grading.similarity,
+            grade: grading.passed ? 'Pass' : 'Fail',
+            flagged: integrity.flagged,
+            flagReasons: integrity.reasons
+        };
+    }
+};
+
 function requiresSemanticGrading(question) {
     return question && (question.type === 'free-text' || question.evaluationType === 'semantic');
 }
@@ -328,6 +417,16 @@ let isAnswered = false;
 let wasCorrect = false;
 let askedQuestions = {}; // Track asked questions per difficulty level
 let questionCounter = 0; // Counter for unique radio button names
+let questionStartAt = null;
+let speakingRecorder = null;
+let speakingChunks = [];
+let speakingRecognition = null;
+let speakingTranscript = '';
+let speakingIsRecording = false;
+let speakingStartAt = null;
+
+const speakingTargetPhrase = 'The cat is on the table.';
+const speakingSimilarityThreshold = 0.9;
 
 // DOM elements
 const questionEl = document.getElementById('question');
@@ -340,6 +439,243 @@ const feedbackEl = document.getElementById('feedback');
 const scoreEl = document.getElementById('score');
 const personalizationEl = document.getElementById('personalization');
 const difficultyEl = document.getElementById('difficulty');
+let speakingModuleEl = null;
+let speakingStatusEl = null;
+let speakingTranscriptEl = null;
+let speakingFeedbackEl = null;
+let speakingStartBtn = null;
+let speakingStopBtn = null;
+
+function normalizeSpokenText(text) {
+    return (text || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function levenshteinDistance(a, b) {
+    const first = a || '';
+    const second = b || '';
+    const rows = first.length + 1;
+    const cols = second.length + 1;
+    const dp = Array.from({ length: rows }, () => new Array(cols).fill(0));
+
+    for (let i = 0; i < rows; i++) dp[i][0] = i;
+    for (let j = 0; j < cols; j++) dp[0][j] = j;
+
+    for (let i = 1; i < rows; i++) {
+        for (let j = 1; j < cols; j++) {
+            const cost = first[i - 1] === second[j - 1] ? 0 : 1;
+            dp[i][j] = Math.min(
+                dp[i - 1][j] + 1,
+                dp[i][j - 1] + 1,
+                dp[i - 1][j - 1] + cost
+            );
+        }
+    }
+
+    return dp[rows - 1][cols - 1];
+}
+
+function calculateSimilarity(expected, spoken) {
+    const left = normalizeSpokenText(expected);
+    const right = normalizeSpokenText(spoken);
+    if (!left && !right) return 0;
+    const distance = levenshteinDistance(left, right);
+    const maxLen = Math.max(left.length, right.length, 1);
+    return Number(((1 - distance / maxLen)).toFixed(3));
+}
+
+function gradeSpeakingResponse(transcript) {
+    const similarity = calculateSimilarity(speakingTargetPhrase, transcript);
+    return {
+        expectedPhrase: speakingTargetPhrase,
+        similarity,
+        passed: similarity >= speakingSimilarityThreshold
+    };
+}
+
+function createSpeakingModule() {
+    if (speakingModuleEl || !personalizationEl) {
+        return;
+    }
+
+    speakingModuleEl = document.createElement('section');
+    speakingModuleEl.id = 'speaking-module';
+    speakingModuleEl.style.marginTop = '20px';
+    speakingModuleEl.style.padding = '16px';
+    speakingModuleEl.style.borderRadius = '12px';
+    speakingModuleEl.style.border = '1px solid #e2e8f0';
+    speakingModuleEl.style.background = 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)';
+    speakingModuleEl.style.boxShadow = '0 10px 20px rgba(15, 23, 42, 0.08)';
+
+    speakingModuleEl.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <h3 style="margin: 0; font-size: 18px;">Speaking Module</h3>
+            <span id="speaking-status" style="font-size: 13px; font-weight: 600; color: #64748b;">Status: Audio Assessment Pending</span>
+        </div>
+        <p style="margin: 10px 0 12px; font-size: 14px; color: #334155;">
+            Target phrase: <strong>${speakingTargetPhrase}</strong>
+        </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <button id="speaking-start" style="padding: 10px 16px; background: #22c55e; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Start Speaking</button>
+            <button id="speaking-stop" style="padding: 10px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;" disabled>Stop</button>
+        </div>
+        <div id="speaking-transcript" style="font-size: 14px; color: #0f172a;">Transcript: (waiting)</div>
+        <div id="speaking-feedback" style="margin-top: 10px; font-size: 14px; color: #0f172a;"></div>
+    `;
+
+    personalizationEl.insertAdjacentElement('afterend', speakingModuleEl);
+
+    speakingStatusEl = document.getElementById('speaking-status');
+    speakingTranscriptEl = document.getElementById('speaking-transcript');
+    speakingFeedbackEl = document.getElementById('speaking-feedback');
+    speakingStartBtn = document.getElementById('speaking-start');
+    speakingStopBtn = document.getElementById('speaking-stop');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const supportsRecognition = Boolean(SpeechRecognition);
+    const supportsRecording = typeof MediaRecorder !== 'undefined';
+
+    if (!supportsRecognition && speakingFeedbackEl) {
+        speakingFeedbackEl.textContent = 'Speech recognition is not supported in this browser. Use a browser with Web Speech API support.';
+        speakingStartBtn.disabled = true;
+    }
+
+    speakingStartBtn.addEventListener('click', () => startSpeakingCapture(SpeechRecognition, supportsRecording));
+    speakingStopBtn.addEventListener('click', stopSpeakingCapture);
+}
+
+function startSpeakingCapture(SpeechRecognition, supportsRecording) {
+    if (speakingIsRecording) return;
+    speakingIsRecording = true;
+    speakingStartAt = Date.now();
+    speakingTranscript = '';
+    speakingChunks = [];
+
+    if (speakingStatusEl) {
+        speakingStatusEl.textContent = 'Status: Listening...';
+    }
+    if (speakingTranscriptEl) {
+        speakingTranscriptEl.textContent = 'Transcript: (listening)';
+    }
+    if (speakingFeedbackEl) {
+        speakingFeedbackEl.textContent = '';
+    }
+
+    if (speakingStartBtn) speakingStartBtn.disabled = true;
+    if (speakingStopBtn) speakingStopBtn.disabled = false;
+
+    if (supportsRecording && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                speakingRecorder = new MediaRecorder(stream);
+                speakingRecorder.ondataavailable = event => {
+                    if (event.data && event.data.size > 0) {
+                        speakingChunks.push(event.data);
+                    }
+                };
+                speakingRecorder.onstop = () => {
+                    const audioBlob = new Blob(speakingChunks, { type: 'audio/webm' });
+                    submitSpeakingAssessment(audioBlob, speakingTranscript);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                speakingRecorder.start();
+            })
+            .catch(() => {
+                if (speakingFeedbackEl) {
+                    speakingFeedbackEl.textContent = 'Microphone access was denied. Please allow access to record audio.';
+                }
+                resetSpeakingControls();
+            });
+    }
+
+    if (SpeechRecognition) {
+        speakingRecognition = new SpeechRecognition();
+        speakingRecognition.lang = 'en-US';
+        speakingRecognition.interimResults = true;
+        speakingRecognition.onresult = event => {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i];
+                if (result.isFinal) {
+                    speakingTranscript += `${result[0].transcript} `;
+                } else {
+                    interim += result[0].transcript;
+                }
+            }
+            const displayText = (speakingTranscript + interim).trim();
+            if (speakingTranscriptEl) {
+                speakingTranscriptEl.textContent = `Transcript: ${displayText || '(listening)'}`;
+            }
+        };
+        speakingRecognition.onerror = () => {
+            if (speakingFeedbackEl) {
+                speakingFeedbackEl.textContent = 'Speech recognition error. Please try again.';
+            }
+        };
+        speakingRecognition.onend = () => {
+            if (speakingIsRecording) {
+                stopSpeakingCapture();
+            }
+        };
+        speakingRecognition.start();
+    }
+}
+
+function stopSpeakingCapture() {
+    if (!speakingIsRecording) return;
+    speakingIsRecording = false;
+
+    if (speakingRecognition) {
+        speakingRecognition.stop();
+        speakingRecognition = null;
+    }
+
+    if (speakingRecorder && speakingRecorder.state !== 'inactive') {
+        speakingRecorder.stop();
+    } else {
+        submitSpeakingAssessment(null, speakingTranscript);
+    }
+
+    resetSpeakingControls();
+}
+
+function resetSpeakingControls() {
+    if (speakingStartBtn) speakingStartBtn.disabled = false;
+    if (speakingStopBtn) speakingStopBtn.disabled = true;
+}
+
+async function submitSpeakingAssessment(audioBlob, transcript) {
+    if (speakingStatusEl) {
+        speakingStatusEl.textContent = 'Status: Analyzing...';
+    }
+
+    const responseTimeMs = speakingStartAt ? Date.now() - speakingStartAt : null;
+    const voiceprintMatch = typeof window.loginVoiceprintMatch === 'boolean'
+        ? window.loginVoiceprintMatch
+        : null;
+    const result = await AssessmentController.submitAudio(audioBlob, transcript, {
+        responseTimeMs,
+        voiceprintMatch
+    });
+    const similarityPercent = Math.round(result.similarity * 100);
+    const gradeText = result.grade;
+    const integrityNote = result.flagged
+        ? ` | Flagged: ${result.flagReasons.join(' ')}`
+        : '';
+
+    if (speakingTranscriptEl) {
+        speakingTranscriptEl.textContent = `Transcript: ${result.transcript || '(no transcript detected)'}`;
+    }
+    if (speakingFeedbackEl) {
+        speakingFeedbackEl.textContent = `Similarity: ${similarityPercent}% | Grade: ${gradeText}${integrityNote}`;
+    }
+    if (speakingStatusEl) {
+        speakingStatusEl.textContent = `Status: Audio Assessment ${gradeText === 'Pass' ? 'Complete' : 'Complete - Needs Practice'}`;
+    }
+}
 
 // Initialize the assessment
 function initAssessment() {
@@ -350,17 +686,17 @@ function initAssessment() {
 
 // Show difficulty selection
 function showDifficultySelection() {
-    questionEl.textContent = '📚 Select Your Difficulty Level';
+    questionEl.textContent = 'ðŸ“š Select Your Difficulty Level';
     inputAreaEl.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
             <button id="easy-level" style="padding: 15px 30px; background: #4ade80; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                🟢 Easy
+                ðŸŸ¢ Easy
             </button>
             <button id="medium-level" style="padding: 15px 30px; background: #f59e0b; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                🟠 Medium
+                ðŸŸ  Medium
             </button>
             <button id="hard-level" style="padding: 15px 30px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                🔴 Hard
+                ðŸ”´ Hard
             </button>
         </div>
     `;
@@ -452,6 +788,7 @@ function displayQuestion() {
     questionEl.textContent = currentQuestion.question;
     inputAreaEl.innerHTML = '';
     questionCounter++; // Increment for each new question displayed
+    questionStartAt = Date.now();
 
     if (currentQuestion.type === 'multiple-choice') {
         currentQuestion.options.forEach(option => {
@@ -551,31 +888,29 @@ function submitAnswer() {
     }
 
     let semanticEvaluation = null;
-    if (semanticQuestion) {
-        semanticEvaluation = evaluateFreeTextAnswer(userAnswer);
-        if (semanticEvaluation.deferScoring) {
-            feedbackEl.textContent = semanticEvaluation.message;
-            feedbackEl.className = semanticEvaluation.feedbackClass;
-            return;
-        }
-    }
-
-    totalQuestions++;
-    const isCorrect = semanticQuestion ? semanticEvaluation.isCorrect : checkAnswer(userAnswer);
-    isAnswered = true;
-    wasCorrect = isCorrect;
-    if (isCorrect) {
-        correctAnswers++;
-    }
+    const responseTimeMs = questionStartAt ? Date.now() - questionStartAt : null;
+    const integrity = IntegrityService.evaluateAttempt(currentQuestion, { responseTimeMs });
+    if (integrity.flagged) {
+        integrityDatabase.save({
+            id: `attempt-${Date.now()}`,
+            type: currentQuestion.type,
+            question: currentQuestion.question,
+            reasons: integrity.reasons,
+            responseTimeMs: integrity.elapsedMs,
+            createdAt: new Date().toISOString()
+        });
+    }    const integrityNote = integrity.flagged
+        ? ` Flagged for review: ${integrity.reasons.join(' ')}`
+        : '';
 
     if (semanticQuestion) {
-        feedbackEl.textContent = semanticEvaluation.message;
+        feedbackEl.textContent = semanticEvaluation.message + integrityNote;
         feedbackEl.className = semanticEvaluation.feedbackClass;
     } else if (isCorrect) {
-        feedbackEl.textContent = '✓ Correct! Well done.';
+        feedbackEl.textContent = `バ" Correct! Well done.${integrityNote}`;
         feedbackEl.className = 'feedback correct';
     } else {
-        feedbackEl.textContent = `✗ Incorrect. The correct answer is: ${currentQuestion.answer}`;
+        feedbackEl.textContent = `バ- Incorrect. The correct answer is: ${currentQuestion.answer}.${integrityNote}`;
         feedbackEl.className = 'feedback incorrect';
     }
 
@@ -689,7 +1024,7 @@ function updatePersonalization() {
 
 // Show completion message
 function showCompletionMessage() {
-    questionEl.textContent = '🎉 Assessment Complete!';
+    questionEl.textContent = 'ðŸŽ‰ Assessment Complete!';
     inputAreaEl.innerHTML = '';
     feedbackEl.textContent = `Congratulations! You answered ${correctAnswers} out of 10 questions correctly!`;
     feedbackEl.className = 'feedback correct';
@@ -738,7 +1073,7 @@ function skipQuestion() {
     }
 
     totalQuestions++;
-    feedbackEl.textContent = '⊘ Question skipped';
+    feedbackEl.textContent = 'âŠ˜ Question skipped';
     feedbackEl.className = 'feedback';
 
     updateScore();
@@ -796,6 +1131,6 @@ nextBtn.addEventListener('click', () => {
         showCompletionMessage();
     }
 });
-
 // Start the assessment with difficulty selection
 showDifficultySelection();
+createSpeakingModule();
