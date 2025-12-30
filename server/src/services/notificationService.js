@@ -2,8 +2,7 @@
  * Notification Service
  * FR17: Configurable Notifications (Email/Push/In-App)
  * UC16: Configure Notification Preferences
- * 
- * Bu servis, kullanıcılara bildirim gönderme işlemlerini yönetir.
+ * * Bu servis, kullanıcılara bildirim gönderme işlemlerini yönetir.
  * Bellekte (in-memory) çalışır, veritabanı gerektirmez.
  */
 
@@ -108,7 +107,15 @@ export const sendReviewReminder = async (userId, topicName) => {
 };
 
 /**
- * Kayıt Doğrulama Email (Mevcut)
+ * Password Reset Email
+ */
+export const sendPasswordResetEmail = (email) => {
+  console.log(`[Email]: Password reset link sent to ${email}`);
+  return { success: true, message: 'Password reset email sent' };
+};
+
+/**
+ * Kayıt Doğrulama Email
  */
 export const sendVerificationEmail = async (email, token) => {
   console.log(`[Email] 📨 Verification email sent to: ${email} | Token: ${token}`);
