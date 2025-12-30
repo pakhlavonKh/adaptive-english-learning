@@ -107,6 +107,16 @@ export const sendReviewReminder = async (userId, topicName) => {
 };
 
 /**
+ * UC20 & FR23: Destek Talebi Onay Bildirimi
+ */
+export const sendSupportConfirmation = (userId, ticketId) => {
+  const title = 'Support Request Received 🎫';
+  const message = `Your ticket #${ticketId} has been successfully created and is under review.`;
+  
+  return sendNotification(userId, 'system', title, message);
+};
+
+/**
  * Password Reset Email
  */
 export const sendPasswordResetEmail = (email) => {

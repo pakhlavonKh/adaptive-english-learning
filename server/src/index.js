@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import * as notificationService from './services/notificationService.js';
 
+
 const app = express();
 const JWT_SECRET = 'your-jwt-secret';
 
@@ -219,41 +220,30 @@ app.post('/api/notifications/preferences', (req, res) => {
 if (!global.supportTickets) global.supportTickets = [];
 
 // Destek talebi oluştur
-app.post('/api/support/tickets', (req, res) => {
+// UC18 & FR23: Support Ticket Endpoint Güncellemesi
+app.post('/api/support/tickets', async (req, res) => { // async eklemeyi unutma
   const token = req.headers.authorization?.split(' ')[1];
-  const { subject, message, priority } = req.body;
-  
   try {
     const { userId } = jwt.verify(token, JWT_SECRET);
-    const user = findUserById(userId);
-    
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    
-    // Destek talebini oluştur
+    const { subject, message, priority } = req.body;
+
     const ticket = {
-      id: Date.now().toString(),
+      id: "TICK-" + Date.now(),
       userId,
-      username: user.username,
-      subject: subject || 'No Subject',
-      message: message || '',
+      subject,
+      message,
       status: 'open',
-      priority: priority || 'normal',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      priority: priority || 'normal', // Varsayılan değer eklendi
+      createdAt: new Date()
     };
-    
+
     global.supportTickets.push(ticket);
-    
-    console.log(`[Support] 🎫 New ticket created: #${ticket.id} by ${user.username}`);
-    
-    // UC20: Destek talebi onay bildirimi gönder
-    notificationService.sendReviewReminder(userId, `Your support ticket #${ticket.id} has been received`);
-    
-    res.json({ 
-      success: true, 
-      ticket: { id: ticket.id, status: ticket.status },
-      message: 'Your support request has been received. We will get back to you shortly.'
-    });
+
+    // SERENAY'IN GÖREVİ: Kullanıcıya anında In-App onay bildirimi gönder (FR23)
+    // notificationService.js içinde 'sendSupportConfirmation' fonksiyonunun tanımlı olduğundan emin ol
+    notificationService.sendSupportConfirmation(userId, ticket.id);
+
+    res.json({ success: true, message: 'Ticket created and notification sent!' });
   } catch (e) {
     res.status(401).json({ error: 'Unauthorized' });
   }
