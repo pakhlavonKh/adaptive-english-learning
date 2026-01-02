@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Edit2, Save, X, LogOut, BookOpen, Users, Shield } from 'lucide-react';
+import LMSIntegration from '../components/LMSIntegration';
 
 export default function Account({ token, user, onLogout }) {
   const navigate = useNavigate();
@@ -425,6 +426,8 @@ export default function Account({ token, user, onLogout }) {
             </div>
           )}
         </form>
+
+        <LMSIntegration token={token} />
       </div>
       </div>
     </div>
