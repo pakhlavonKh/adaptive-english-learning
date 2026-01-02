@@ -26,4 +26,17 @@ public class AccountController {
             System.out.println("Response: Invalid Token.");
         }
     }
+    // ... existing code ...
+    
+    public void loginWithGoogle(String token) {
+        System.out.println("--- OAuth Request Received ---");
+        models.Student user = userService.loginWithOAuth(token);
+        
+        if (user != null) {
+            System.out.println("Response: Login Successful via Google.");
+            System.out.println("Token Generated: JWT-ACCESS-TOKEN-FOR-" + user.username);
+        } else {
+            System.out.println("Response: OAuth Login Failed.");
+        }
+    }
 }
