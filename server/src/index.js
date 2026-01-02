@@ -1117,9 +1117,152 @@ app.post('/api/ai/correct-writing', async (req, res) => {
   }
 });
 
+// ============================================================================
+// ML OPS ENDPOINTS - UC18: Retrain/Update AI Models
+// ============================================================================
+
+import retrainingService from './services/retrainingService.js';
+import ModelVersionModel from './models/modelVersion.js';
+
+// Trigger model retraining (admin only)
+app.post('/api/mlops/retrain', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    // Check if user is admin
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Get options from request
+    const { limit, autoDeploy, since } = req.body;
+    const options = {
+      limit: limit || 10000,
+      autoDeploy: autoDeploy !== false,
+      since: since || null
+    };
+
+    // Run retraining
+    console.log('[API] 🚀 Starting model retraining...');
+    const result = await retrainingService.retrainModel(options);
+    
+    res.json(result);
+  } catch (e) {
+    console.error('[API] ❌ Retraining error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get retraining status
+app.get('/api/mlops/status', async (req, res) => {
+  try {
+    const status = retrainingService.getStatus();
+    res.json(status);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// List all model versions
+app.get('/api/mlops/versions', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const versions = await ModelVersionModel.find()
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    res.json({ versions });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get current production model
+app.get('/api/mlops/production', async (req, res) => {
+  try {
+    const productionModel = await ModelVersionModel.getCurrentProductionModel();
+    
+    if (!productionModel) {
+      return res.status(404).json({ error: 'No production model found' });
+    }
+    
+    res.json({ model: productionModel });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Deploy a model version to production
+app.post('/api/mlops/deploy/:versionId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { versionId } = req.params;
+    const deployed = await retrainingService.deployModel(versionId);
+    
+    res.json({ 
+      success: true, 
+      version: deployed.version,
+      deployedAt: deployed.deployedAt 
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get model version details
+app.get('/api/mlops/versions/:versionId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { versionId } = req.params;
+    const version = await ModelVersionModel.findById(versionId);
+    
+    if (!version) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+    
+    res.json({ version });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================================
+
 // Start server
 app.listen(4000, () => {
   console.log('Server running on http://localhost:4000');
   console.log('Seed questions: GET /api/seed');
   console.log('AI Features:', process.env.GEMINI_API_KEY ? '✓ Enabled' : '✗ Disabled (add GEMINI_API_KEY to .env)');
+  console.log('ML Ops:', '✓ Automated retraining available');
 });
