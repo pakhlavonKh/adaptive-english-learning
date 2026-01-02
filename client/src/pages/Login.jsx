@@ -48,6 +48,7 @@ export default function Login({ onLogin }) {
   }
 
   return (
+    <>
     <div className="auth-container">
       <div className="auth-background">
         <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80" alt="background" />
@@ -75,7 +76,11 @@ export default function Login({ onLogin }) {
               onChange={e=>setUsername(e.target.value)}
               required
             />
-          </div>or continue with</span>
+          </div>
+        </div>
+
+        <div className="auth-divider">
+          <span>or continue with</span>
         </div>
 
         <button 
@@ -94,7 +99,7 @@ export default function Login({ onLogin }) {
         </button>
 
         <div className="auth-divider">
-          <span>
+          <span/>
         </div>
 
         <div className="form-group">
@@ -131,6 +136,7 @@ export default function Login({ onLogin }) {
         </p>
       </form>
     </div>
+    </>
   );
 }
 
