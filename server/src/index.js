@@ -27,6 +27,7 @@ import aiService from './services/aiService.js';
 import * as assessmentService from './services/assessmentService.js';
 import userService from './services/userService.js';
 import lmsService from './services/lmsService.js';
+import * as auditService from './services/auditService.js';
 
 
 const app = express();
@@ -51,8 +52,28 @@ app.post('/api/register', async (req, res) => {
   const hashed = await bcrypt.hash(password, 10);
   try {
     const user = await UserModel.create({ username, password: hashed });
+    
+    // Log registration
+    await auditService.logAction(
+      'REGISTER',
+      username,
+      'New user registration',
+      req.ip,
+      'SUCCESS',
+      user._id
+    );
+    
     res.json({ id: user._id, username: user.username });
   } catch (e) {
+    // Log failed registration
+    await auditService.logAction(
+      'REGISTER',
+      username || 'unknown',
+      `Registration failed: ${e.message}`,
+      req.ip,
+      'FAILURE'
+    );
+    
     res.status(400).json({ error: 'User exists' });
   }
 });
@@ -63,6 +84,17 @@ app.post('/api/login', async (req, res) => {
   const user = await UserModel.findOne({ username });
   if (user && await bcrypt.compare(password, user.password)) {
     const token = jwt.sign({ userId: user._id.toString() }, JWT_SECRET);
+    
+    // Log successful login
+    await auditService.logAction(
+      'LOGIN',
+      username,
+      'User logged in',
+      req.ip,
+      'SUCCESS',
+      user._id
+    );
+    
     res.json({ 
       token, 
       user: { 
@@ -76,6 +108,15 @@ app.post('/api/login', async (req, res) => {
       } 
     });
   } else {
+    // Log failed login
+    await auditService.logAction(
+      'LOGIN',
+      username || 'unknown',
+      'Invalid credentials',
+      req.ip,
+      'FAILURE'
+    );
+    
     res.status(401).json({ error: 'Invalid credentials' });
   }
 });
@@ -1112,6 +1153,54 @@ app.post('/api/ai/correct-writing', async (req, res) => {
 
     const correction = await aiService.correctWriting(text, focusArea || 'general');
     res.json({ correction, originalText: text });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================================
+// AUDIT LOG ENDPOINTS
+// ============================================================================
+
+// Get all audit logs (admin only)
+app.get('/api/audit-logs', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const filters = {
+      user: req.query.user,
+      action: req.query.action,
+      status: req.query.status,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      limit: req.query.limit ? parseInt(req.query.limit) : 1000
+    };
+
+    const logs = await auditService.getAuditLogs(filters);
+    res.json(logs);
+  } catch (e) {
+    console.error('[Audit] Error fetching logs:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get audit logs for current user
+app.get('/api/audit-logs/me', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const logs = await auditService.getUserAuditLogs(userId, 100);
+    res.json(logs);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

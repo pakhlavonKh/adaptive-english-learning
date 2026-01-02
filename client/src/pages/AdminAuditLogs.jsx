@@ -6,7 +6,12 @@ export default function AdminAuditLogs() {
 
   // Pull Data
   useEffect(() => {
-    fetch('http://localhost:8001/api/audit-logs') // Watch out for Port 8001
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:4000/api/audit-logs', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then(data => setLogs(data))
       .catch(err => console.error("Log hatası:", err));
