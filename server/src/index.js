@@ -24,6 +24,7 @@ import * as notificationService from './services/notificationService.js';
 import * as pathGenerationService from './services/pathGenerationService.js';
 import * as dataCollectionService from './services/dataCollectionService.js';
 import aiService from './services/aiService.js';
+import * as assessmentService from './services/assessmentService.js';
 
 
 const app = express();
@@ -113,10 +114,10 @@ app.get('/api/next-question', async (req, res) => {
   }
 });
 
-// Submit answer
+// Submit answer (supports both objective and NLP-based free-text responses)
 app.post('/api/submit', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  const { questionId, correct } = req.body;
+  const { questionId, correct, userAnswer, isNLP } = req.body;
 
   try {
     const { userId } = jwt.verify(token, JWT_SECRET) || {};
@@ -125,6 +126,24 @@ app.post('/api/submit', async (req, res) => {
 
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    let finalCorrect = correct;
+    let nlpEvaluation = null;
+    let aiFeedback = null;
+
+    // Handle NLP/semantic evaluation for free-text responses
+    if (isNLP && userAnswer) {
+      const evaluation = assessmentService.GradingService.evaluateResponse(userAnswer, {
+        submissionId: `${userId}-${questionId}-${Date.now()}`,
+        promptId: questionId,
+        studentId: userId
+      });
+      
+      nlpEvaluation = evaluation;
+      // Consider response correct if grade >= 70 and not flagged for manual review
+      finalCorrect = evaluation.status === 'graded' && evaluation.grade >= 70;
+      aiFeedback = evaluation.feedback;
+    }
 
     // Spaced repetition interval
     let interval = 1;
@@ -135,32 +154,45 @@ app.post('/api/submit', async (req, res) => {
     }
 
     const nextReview = new Date(Date.now() + interval * 24 * 60 * 60 * 1000);
-    await ResponseModel.create({ user: userId, question: questionId, correct, nextReview });
+    await ResponseModel.create({ 
+      user: userId, 
+      question: questionId, 
+      correct: finalCorrect, 
+      nextReview,
+      userAnswer: userAnswer || '',
+      nlpGrade: nlpEvaluation?.grade,
+      nlpConfidence: nlpEvaluation?.confidence
+    });
 
     // Update user ability (simple Elo-like)
     const k = 0.5;
     const expected = 1 / (1 + Math.exp(-((user.theta || 0) - (question.difficulty || 0))));
-    const newTheta = (user.theta || 0) + k * ((correct ? 1 : 0) - expected);
+    const newTheta = (user.theta || 0) + k * ((finalCorrect ? 1 : 0) - expected);
 
     user.theta = newTheta;
     await user.save();
 
-    // Generate AI feedback if enabled
-    let aiFeedback = null;
-    if (process.env.GEMINI_API_KEY && process.env.ENABLE_AI_FEEDBACK === 'true') {
+    // Generate AI feedback if enabled and not already provided by NLP
+    if (!aiFeedback && process.env.GEMINI_API_KEY && process.env.ENABLE_AI_FEEDBACK === 'true') {
       try {
         aiFeedback = await aiService.generateFeedback(
           question.text,
-          req.body.userAnswer || '',
+          userAnswer || '',
           question.answer,
-          correct
+          finalCorrect
         );
       } catch (err) {
         console.error('AI feedback generation failed:', err);
       }
     }
 
-    res.json({ newTheta, correct, nextReview, aiFeedback });
+    res.json({ 
+      newTheta, 
+      correct: finalCorrect, 
+      nextReview, 
+      aiFeedback,
+      nlpEvaluation
+    });
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
   }
@@ -826,6 +858,38 @@ app.get('/api/training-data/batch/:batchNumber', async (req, res) => {
     res.json(batch);
   } catch (e) {
     console.error('Error exporting batch:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== NLP EVALUATION ENDPOINT =====
+
+// Evaluate free-text response using NLP and semantic analysis
+app.post('/api/evaluate-response', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const { text, questionId } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required for evaluation' });
+    }
+
+    // Perform NLP semantic evaluation
+    const evaluation = assessmentService.GradingService.evaluateResponse(text, {
+      submissionId: `${userId}-${questionId || 'custom'}-${Date.now()}`,
+      promptId: questionId || 'free-text-evaluation',
+      studentId: userId
+    });
+
+    res.json({
+      evaluation,
+      passed: evaluation.status === 'graded' && evaluation.grade >= 70,
+      needsReview: evaluation.status === 'pending_manual_review'
+    });
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });

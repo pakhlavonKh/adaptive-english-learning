@@ -20,14 +20,24 @@ export const getNextQuestion = (token, languageCode = "en") =>
     headers: { Authorization: `Bearer ${token}` }
   }).then((r) => r.data);
 
-export const submit = (token, questionId, correct) =>
+export const submit = (token, questionId, correct, userAnswer = '', isNLP = false) =>
   API.post(
     "/submit",
-    { questionId, correct },
+    { questionId, correct, userAnswer, isNLP },
     { headers: { Authorization: `Bearer ${token}` } }
   ).then((r) => r.data);
 
 export const seed = () => API.get("/seed").then((r) => r.data);
+
+/* ================= NLP EVALUATION ================= */
+
+// Evaluate free-text response using NLP semantic analysis
+export const evaluateResponse = (token, text, questionId = null) =>
+  API.post(
+    "/evaluate-response",
+    { text, questionId },
+    { headers: { Authorization: `Bearer ${token}` } }
+  ).then((r) => r.data);
 
 /* ================= LEARNING PATH ================= */
 

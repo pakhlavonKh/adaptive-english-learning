@@ -1808,6 +1808,65 @@ form.card h3 {
   margin-top: 10px;
 }
 
+.question-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.question-input:focus,
+.question-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.question-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s ease;
+}
+
+.question-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.option-btn {
+  background: white;
+  border: 2px solid #ddd;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.option-btn:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.option-btn.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
 .btn-submit-answer {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -1820,9 +1879,69 @@ form.card h3 {
   transition: all 0.2s ease;
 }
 
-.btn-submit-answer:hover {
+.btn-submit-answer:hover:not(:disabled) {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-submit-answer:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feedback {
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 10px;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease;
+}
+
+.feedback.correct {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.feedback.incorrect {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.feedback.review {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.feedback-message {
+  margin-bottom: 8px;
+}
+
+.nlp-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  font-size: 13px;
+}
+
+.nlp-score {
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.ai-feedback-box {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 4px;
+  font-weight: normal;
+}
+
+.ai-feedback-box strong {
+  display: block;
+  margin-bottom: 5px;
 }
 
 .btn-ai-help {

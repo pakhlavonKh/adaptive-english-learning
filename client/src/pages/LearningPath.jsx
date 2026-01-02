@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getLearningPath, getModule, submit, getAIExplanation, generateAIQuestion } from "../api";
+import { getLearningPath, getModule, submit, evaluateResponse, getAIExplanation, generateAIQuestion } from "../api";
 
 export default function LearningPath({ token }) {
   const [path, setPath] = useState(null);
@@ -12,6 +12,7 @@ export default function LearningPath({ token }) {
   const [feedback, setFeedback] = useState(null);
   const [aiExplanation, setAiExplanation] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
 
   useEffect(() => {
     loadPath();
@@ -58,23 +59,70 @@ export default function LearningPath({ token }) {
     if (!item.question) return;
     
     const userAnswer = (answer || '').trim();
-    const correct = userAnswer.toLowerCase() === (item.question.answer || '').toLowerCase();
+    if (!userAnswer) {
+      setFeedback({ correct: false, message: '⚠️ Please enter an answer.' });
+      return;
+    }
+
+    setEvaluating(true);
+    setFeedback(null);
     
     try {
-      const res = await submit(token, item.question._id, correct);
-      setFeedback({
-        correct: res.correct,
-        message: res.correct ? '✅ Correct! Great job!' : '❌ Incorrect. Try again!'
-      });
+      const question = item.question;
+      const isFreeText = question.type === 'free-text' || question.evaluationType === 'semantic';
+      
+      if (isFreeText) {
+        // Use NLP evaluation for free-text responses
+        const result = await submit(token, question._id, false, userAnswer, true);
+        
+        const nlpResult = result.nlpEvaluation;
+        const passed = nlpResult?.status === 'graded' && nlpResult?.grade >= 70;
+        
+        setFeedback({
+          correct: passed,
+          message: passed 
+            ? `✅ Great work! Score: ${nlpResult.grade}% - ${nlpResult.feedback}` 
+            : nlpResult?.status === 'pending_manual_review'
+              ? `⏳ ${nlpResult.feedback}`
+              : `📝 Score: ${nlpResult.grade}% - ${nlpResult.feedback}`,
+          nlpScore: nlpResult?.grade,
+          nlpConfidence: nlpResult?.confidence,
+          needsReview: nlpResult?.status === 'pending_manual_review',
+          aiFeedback: result.aiFeedback
+        });
+      } else {
+        // Traditional objective evaluation
+        const correctAnswer = (question.answer || '').toLowerCase();
+        const isCorrect = userAnswer.toLowerCase() === correctAnswer;
+        
+        const result = await submit(token, question._id, isCorrect, userAnswer, false);
+        
+        setFeedback({
+          correct: result.correct,
+          message: result.correct 
+            ? '✅ Correct! Great job!' 
+            : `❌ Incorrect. The correct answer is: "${question.answer}"`,
+          aiFeedback: result.aiFeedback
+        });
+        
+        // Get AI explanation after answering incorrectly
+        if (!result.correct) {
+          getAIHelp(question.text);
+        }
+      }
+      
       setAnswer('');
       
-      // Get AI explanation after answering incorrectly
-      if (!res.correct) {
-        getAIHelp(item.question.text);
-      }
+      // Reload learning path to get updated theta and recommendations
+      setTimeout(() => loadPath(), 1000);
     } catch (e) {
       console.error('Submit error:', e);
-      setFeedback({ correct: false, message: 'Failed to submit answer.' });
+      setFeedback({ 
+        correct: false, 
+        message: '❌ Failed to submit answer. Please try again.' 
+      });
+    } finally {
+      setEvaluating(false);
     }
   }
 
@@ -211,36 +259,95 @@ export default function LearningPath({ token }) {
             {moduleContent?.items && moduleContent.items.length > 0 ? (
               <div className="questions-list">
                 <h4>Practice Questions</h4>
-                {moduleContent.items.map((item, index) => (
-                  <div key={item.id || index} className="question-item">
-                    <div className="question-header">
-                      <span className="question-number">#{index + 1}</span>
-                      <span className="question-type">{item.type}</span>
-                      <span className="question-difficulty">Difficulty: {item.difficulty}</span>
-                    </div>
-                    {item.question ? (
+                {moduleContent.items.map((item, index) => {
+                  if (!item.question) {
+                    return (
+                      <div key={item.id || index} className="question-item">
+                        <div className="question-header">
+                          <span className="question-number">#{index + 1}</span>
+                          <span className="question-type">{item.type || 'upcoming'}</span>
+                        </div>
+                        <p className="no-question">⏳ Question coming soon...</p>
+                      </div>
+                    );
+                  }
+
+                  const question = item.question;
+                  const isFreeText = question.type === 'free-text' || question.evaluationType === 'semantic';
+
+                  return (
+                    <div key={item.id || index} className="question-item">
+                      <div className="question-header">
+                        <span className="question-number">#{index + 1}</span>
+                        <span className="question-type">
+                          {isFreeText ? '📝 Free Text' : question.type || 'objective'}
+                        </span>
+                        <span className="question-difficulty">
+                          Level: {question.difficulty >= 1.5 ? 'Advanced' : question.difficulty >= 0 ? 'Intermediate' : 'Beginner'}
+                        </span>
+                      </div>
+                      
                       <div className="question-content">
-                        <p className="question-text">{item.question.text}</p>
-                        <form onSubmit={(e) => handleAnswerSubmit(e, item)}>
-                          <input
-                            type="text"
-                            value={answer}
-                            onChange={(e) => setAnswer(e.target.value)}
-                            placeholder="Your answer..."
-                            className="question-input"
-                          />
-                          <button type="submit" className="btn-submit-answer">
-                            Submit Answer
-                          </button>
-                        </form>
-                        {feedback && (
-                          <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`}>
-                            {feedback.message}
+                        <p className="question-text">{question.text}</p>
+                        
+                        {/* Display options for multiple choice */}
+                        {question.options && question.options.length > 0 && (
+                          <div className="question-options">
+                            {question.options.map((opt, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => setAnswer(opt)}
+                                className={`option-btn ${answer === opt ? 'selected' : ''}`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
                           </div>
                         )}
-                        {!feedback && (
+                        
+                        <form onSubmit={(e) => handleAnswerSubmit(e, item)}>
+                          <textarea
+                            value={answer}
+                            onChange={(e) => setAnswer(e.target.value)}
+                            placeholder={isFreeText 
+                              ? "Write your detailed response here... (minimum 40 words for best evaluation)" 
+                              : "Your answer..."}
+                            className={isFreeText ? "question-textarea" : "question-input"}
+                            rows={isFreeText ? 5 : 1}
+                            disabled={evaluating}
+                          />
+                          <button 
+                            type="submit" 
+                            className="btn-submit-answer"
+                            disabled={evaluating || !answer.trim()}
+                          >
+                            {evaluating ? '⏳ Evaluating...' : isFreeText ? '📤 Submit for Evaluation' : 'Submit Answer'}
+                          </button>
+                        </form>
+                        
+                        {feedback && (
+                          <div className={`feedback ${feedback.correct ? 'correct' : feedback.needsReview ? 'review' : 'incorrect'}`}>
+                            <div className="feedback-message">{feedback.message}</div>
+                            {feedback.nlpScore !== undefined && (
+                              <div className="nlp-details">
+                                <div className="nlp-score">
+                                  Score: {feedback.nlpScore}% 
+                                  {feedback.nlpConfidence && ` (Confidence: ${Math.round(feedback.nlpConfidence * 100)}%)`}
+                                </div>
+                              </div>
+                            )}
+                            {feedback.aiFeedback && (
+                              <div className="ai-feedback-box">
+                                <strong>💡 AI Feedback:</strong>
+                                <p>{feedback.aiFeedback}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {!feedback && !evaluating && (
                           <button
-                            onClick={() => getAIHelp(item.question.text)}
+                            onClick={() => getAIHelp(question.text)}
                             className="btn-ai-help"
                             disabled={loadingAI}
                           >
@@ -248,11 +355,9 @@ export default function LearningPath({ token }) {
                           </button>
                         )}
                       </div>
-                    ) : (
-                      <p className="no-question">Question not available</p>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="no-questions">No questions in this module yet.</p>
@@ -272,30 +377,71 @@ export default function LearningPath({ token }) {
         <div className="ai-generated-question">
           <h4>🤖 AI Generated Practice Question</h4>
           <p className="question-text">{activeQuestion.text}</p>
-          <form onSubmit={(e) => {
+          <form onSubmit={async (e) => {
             e.preventDefault();
-            const correct = answer.toLowerCase().trim() === activeQuestion.answer.toLowerCase().trim();
-            setFeedback({
-              correct,
-              message: correct ? '✅ Correct!' : `❌ The answer is: ${activeQuestion.answer}`
-            });
+            if (!answer.trim()) return;
+            
+            setEvaluating(true);
+            try {
+              // Check if it's a simple answer comparison or needs NLP
+              const isLongAnswer = answer.split(/\s+/).length > 10;
+              
+              if (isLongAnswer) {
+                // Use NLP evaluation for longer answers
+                const result = await evaluateResponse(token, answer, null);
+                const passed = result.passed;
+                
+                setFeedback({
+                  correct: passed,
+                  message: passed 
+                    ? `✅ Excellent! Score: ${result.evaluation.grade}% - ${result.evaluation.feedback}`
+                    : `📝 Score: ${result.evaluation.grade}% - ${result.evaluation.feedback}`,
+                  nlpScore: result.evaluation.grade
+                });
+              } else {
+                // Simple comparison for short answers
+                const correct = answer.toLowerCase().trim() === (activeQuestion.answer || '').toLowerCase().trim();
+                setFeedback({
+                  correct,
+                  message: correct ? '✅ Correct!' : `❌ The answer is: ${activeQuestion.answer}`
+                });
+              }
+            } catch (err) {
+              setFeedback({
+                correct: false,
+                message: '❌ Error evaluating answer'
+              });
+            } finally {
+              setEvaluating(false);
+            }
             setAnswer('');
           }}>
-            <input
-              type="text"
+            <textarea
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               placeholder="Your answer..."
               className="question-input"
+              rows={3}
+              disabled={evaluating}
             />
-            <button type="submit" className="btn-submit-answer">Submit</button>
+            <button 
+              type="submit" 
+              className="btn-submit-answer"
+              disabled={evaluating || !answer.trim()}
+            >
+              {evaluating ? '⏳ Evaluating...' : 'Submit'}
+            </button>
           </form>
           {feedback && (
             <div className={`feedback ${feedback.correct ? 'correct' : 'incorrect'}`}>
               {feedback.message}
             </div>
           )}
-          <button onClick={() => setActiveQuestion(null)} className="btn-close">Close</button>
+          <button onClick={() => {
+            setActiveQuestion(null);
+            setFeedback(null);
+            setAnswer('');
+          }} className="btn-close">Close</button>
         </div>
       )}
     </div>
