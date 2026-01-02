@@ -14,7 +14,13 @@ import ModuleModel from '../src/models/module.js';
 import UserModel from '../src/models/user.js';
 import { allQuestions, modules } from '../src/data/contentData.js';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/english-learning';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('❌ ERROR: MONGODB_URI not found in .env file');
+  console.error('Please ensure your .env file has MONGODB_URI defined');
+  process.exit(1);
+}
 
 /**
  * Comprehensive Database Seeding Script
@@ -28,7 +34,7 @@ async function seedDatabase() {
   try {
     // Connect to MongoDB
     console.log('📡 Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
+    await connectMongo(MONGODB_URI);
     console.log('✅ Connected to MongoDB\n');
 
     // Clear existing data (optional - comment out if you want to keep existing data)
