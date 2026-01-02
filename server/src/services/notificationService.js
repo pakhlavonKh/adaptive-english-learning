@@ -2,8 +2,7 @@
  * Notification Service
  * FR17: Configurable Notifications (Email/Push/In-App)
  * UC16: Configure Notification Preferences
- * 
- * Bu servis, kullanıcılara bildirim gönderme işlemlerini yönetir.
+ * * Bu servis, kullanıcılara bildirim gönderme işlemlerini yönetir.
  * Bellekte (in-memory) çalışır, veritabanı gerektirmez.
  */
 
@@ -105,6 +104,16 @@ export const sendReviewReminder = async (userId, topicName) => {
   const message = `Don't forget to review: ${topicName}`;
   
   return sendNotification(userId, 'reminder', title, message);
+};
+
+/**
+ * UC20 & FR23: Destek Talebi Onay Bildirimi
+ */
+export const sendSupportConfirmation = (userId, ticketId) => {
+  const title = 'Support Request Received 🎫';
+  const message = `Your ticket #${ticketId} has been successfully created and is under review.`;
+  
+  return sendNotification(userId, 'system', title, message);
 };
 
 /**

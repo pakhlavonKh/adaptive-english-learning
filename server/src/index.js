@@ -25,6 +25,7 @@ import * as pathGenerationService from './services/pathGenerationService.js';
 import * as dataCollectionService from './services/dataCollectionService.js';
 import aiService from './services/aiService.js';
 
+
 const app = express();
 // const prisma = new PrismaClient();
 const MONGODB_URI = process.env.MONGODB_URI || '';
@@ -395,33 +396,32 @@ app.post('/api/notifications/preferences', (req, res) => {
 // ===== SUPPORT SYSTEM (FR23) =====
 if (!global.supportTickets) global.supportTickets = [];
 
+// Destek talebi oluştur
+// UC18 & FR23: Support Ticket Endpoint Güncellemesi
 app.post('/api/support/tickets', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  const { subject, message, priority } = req.body;
-  
   try {
     const { userId } = jwt.verify(token, JWT_SECRET);
     const user = await UserModel.findById(userId);
+    const { subject, message, priority } = req.body;
     
     if (!user) return res.status(404).json({ error: 'User not found' });
     
     const ticket = {
-      id: Date.now().toString(),
+      id: "TICK-" + Date.now(),
       userId,
-      username: user.username,
-      subject: subject || 'No Subject',
-      message: message || '',
+      subject,
+      message,
       status: 'open',
-      priority: priority || 'normal',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      priority: priority || 'normal', // Varsayılan değer eklendi
+      createdAt: new Date()
     };
-    
+
     global.supportTickets.push(ticket);
     console.log(`[Support] 🎫 New ticket created: #${ticket.id} by ${user.username}`);
     
-    // Send confirmation notification
-    notificationService.sendReviewReminder(userId, `Your support ticket #${ticket.id} has been received`);
+    // Send confirmation notification (UC20 & FR23)
+    notificationService.sendSupportConfirmation(userId, ticket.id);
     
     res.json({ 
       success: true, 
