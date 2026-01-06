@@ -117,19 +117,14 @@ export default function Badges({ token, user }) {
                 {gamification.badges.map((badge, index) => (
                   <div
                     key={index}
-                    className="badge-card"
-                    style={{
-                      borderColor: getRarityColor(badge.rarity),
-                      boxShadow: `0 4px 12px ${getRarityGlow(badge.rarity)}`
-                    }}
+                    className={`badge-card badge-${badge.rarity}`}
                   >
                     <div className="badge-icon">{badge.icon}</div>
                     <h3 className="badge-name">{badge.name}</h3>
                     <p className="badge-description">{badge.description}</p>
                     <div className="badge-meta">
                       <span
-                        className="badge-rarity"
-                        style={{ background: getRarityColor(badge.rarity) }}
+                        className={`badge-rarity badge-rarity-${badge.rarity}`}
                       >
                         {badge.rarity}
                       </span>
@@ -159,11 +154,8 @@ export default function Badges({ token, user }) {
                       <span className="rarity-name">{rarity}</span>
                       <div className="rarity-bar-bg">
                         <div
-                          className="rarity-bar-fill"
-                          style={{
-                            width: `${(count / gamification.totalBadges) * 100}%`,
-                            background: getRarityColor(rarity)
-                          }}
+                          className={`rarity-bar-fill rarity-bar-${rarity}`}
+                          style={{ width: `${(count / gamification.totalBadges) * 100}%` }}
                         />
                       </div>
                       <span className="rarity-count">{count}</span>

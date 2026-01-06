@@ -340,7 +340,7 @@ export default function LearningPath({ token }) {
                         
                         {/* Voice Input for Speaking Questions - FR23 */}
                         {isSpeaking && (
-                          <div className="voice-input-section">
+                          <div className="learning-path-voice-section">
                             <VoiceInput 
                               onTranscriptChange={(transcript) => {
                                 setVoiceAnswer(transcript);
@@ -391,7 +391,7 @@ export default function LearningPath({ token }) {
                         
                         {/* Submit Button for Speaking Questions */}
                         {isSpeaking && (
-                          <form onSubmit={(e) => handleAnswerSubmit(e, item)} style={{ marginTop: '16px' }}>
+                          <form onSubmit={(e) => handleAnswerSubmit(e, item)} className="learning-path-submit-speaking">
                             <button 
                               type="submit" 
                               className="btn-submit-answer"

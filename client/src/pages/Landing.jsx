@@ -126,20 +126,14 @@ export default function Landing() {
           }}
         >
           {/* Gradient Background */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: carouselSlides[carouselIndex].gradient,
-            zIndex: 1
+          <div className="landing-carousel-bg" style={{
+            background: carouselSlides[carouselIndex].gradient
           }}></div>
 
           <div className="carousel-content">
             <HeroSVG />
-            <h1 style={{fontWeight:800,letterSpacing:'-2px'}}>{carouselSlides[carouselIndex].title}</h1>
-            <p style={{fontSize:22,marginBottom:32}}>{carouselSlides[carouselIndex].subtitle}</p>
+            <h1 className="landing-hero-title">{carouselSlides[carouselIndex].title}</h1>
+            <p className="landing-hero-subtitle">{carouselSlides[carouselIndex].subtitle}</p>
             <button className="cta-button-large" onClick={() => navigate('/login')}>Start Learning Now</button>
           </div>
 
@@ -205,7 +199,11 @@ export default function Landing() {
             <button className="carousel-nav prev" onClick={prevTestimonial}>❮</button>
             <div className="testimonial-card">
               <div className="testimonial-avatar">
-                <img src={`https://randomuser.me/api/portraits/${testimonialIndex % 2 === 0 ? 'women' : 'men'}/${testimonialIndex + 10}.jpg`} alt="avatar" style={{width:60,height:60,borderRadius:'50%',objectFit:'cover',boxShadow:'0 2px 8px #667eea55'}} />
+                <img 
+                  src={`https://randomuser.me/api/portraits/${testimonialIndex % 2 === 0 ? 'women' : 'men'}/${testimonialIndex + 10}.jpg`} 
+                  alt="avatar" 
+                  className="landing-testimonial-avatar" 
+                />
               </div>
               <p className="testimonial-text">"{testimonials[testimonialIndex].feedback}"</p>
               <h4 className="testimonial-name">{testimonials[testimonialIndex].name}</h4>

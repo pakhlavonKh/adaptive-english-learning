@@ -188,34 +188,20 @@ export default function Calendar() {
     .slice(0, 5);
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="calendar-container">
+      <div className="calendar-header">
         <h1>📅 Calendar</h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="calendar-controls">
+          <div className="view-toggle">
             <button
               onClick={() => setView('month')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: view === 'month' ? '#3498db' : '#ecf0f1',
-                color: view === 'month' ? 'white' : '#2c3e50',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className={`view-btn ${view === 'month' ? 'active' : ''}`}
             >
               Month View
             </button>
             <button
               onClick={() => setView('list')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: view === 'list' ? '#3498db' : '#ecf0f1',
-                color: view === 'list' ? 'white' : '#2c3e50',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className={`view-btn ${view === 'list' ? 'active' : ''}`}
             >
               List View
             </button>
@@ -224,15 +210,7 @@ export default function Calendar() {
           {['teacher', 'admin'].includes(userRole) && (
             <button
               onClick={() => setShowCreateModal(true)}
-              style={{
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
+              className="create-assignment-btn"
             >
               + Create Assignment
             </button>
@@ -243,40 +221,26 @@ export default function Calendar() {
       {view === 'month' ? (
         <>
           {/* Month Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div className="month-navigation">
             <button
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className="month-nav-btn"
             >
               ← Previous
             </button>
             <h2>{monthName}</h2>
             <button
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className="month-nav-btn"
             >
               Next →
             </button>
           </div>
 
           {/* Calendar Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', backgroundColor: '#ddd', border: '1px solid #ddd' }}>
+          <div className="calendar-grid">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} style={{ backgroundColor: '#34495e', color: 'white', padding: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
+              <div key={day} className="calendar-day-header">
                 {day}
               </div>
             ))}
@@ -288,44 +252,28 @@ export default function Calendar() {
               return (
                 <div
                   key={idx}
-                  style={{
-                    backgroundColor: date ? (isToday ? '#e8f4f8' : 'white') : '#f8f9fa',
-                    minHeight: '120px',
-                    padding: '0.5rem',
-                    cursor: date ? 'pointer' : 'default',
-                    border: isToday ? '2px solid #3498db' : 'none',
-                    position: 'relative'
-                  }}
+                  className={`calendar-day ${!date ? 'empty' : ''} ${isToday ? 'today' : ''}`}
                   onClick={() => date && setSelectedDate(date)}
                 >
                   {date && (
                     <>
-                      <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: isToday ? '#3498db' : '#2c3e50' }}>
+                      <div className={`day-number ${isToday ? 'today' : ''}`}>
                         {date.getDate()}
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div className="day-events">
                         {dayEvents.slice(0, 3).map((event, i) => {
                           const status = isOverdue(event.date, event.status) ? 'overdue' : event.status;
                           return (
                             <div
                               key={i}
-                              style={{
-                                backgroundColor: getStatusColor(status),
-                                color: 'white',
-                                padding: '2px 6px',
-                                borderRadius: '3px',
-                                fontSize: '0.75rem',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}
+                              className={`event-badge event-${status}`}
                             >
                               {event.title}
                             </div>
                           );
                         })}
                         {dayEvents.length > 3 && (
-                          <div style={{ fontSize: '0.7rem', color: '#7f8c8d', textAlign: 'center' }}>
+                          <div className="more-events">
                             +{dayEvents.length - 3} more
                           </div>
                         )}
@@ -339,47 +287,32 @@ export default function Calendar() {
         </>
       ) : (
         /* List View */
-        <div>
+        <div className="list-view">
           <h2>Upcoming Assignments</h2>
           {loading ? (
             <p>Loading...</p>
           ) : upcomingEvents.length === 0 ? (
-            <p style={{ color: '#7f8c8d', fontStyle: 'italic' }}>No upcoming assignments</p>
+            <p className="no-assignments">No upcoming assignments</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="assignments-list">
               {upcomingEvents.map(event => {
                 const status = isOverdue(event.date, event.status) ? 'overdue' : event.status;
                 return (
                   <div
                     key={event.id}
-                    style={{
-                      backgroundColor: 'white',
-                      padding: '1.5rem',
-                      borderRadius: '8px',
-                      borderLeft: `4px solid ${getStatusColor(status)}`,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}
+                    className={`assignment-card assignment-${status}`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <h3 style={{ margin: '0 0 0.5rem 0' }}>{event.title}</h3>
-                        <p style={{ margin: '0 0 0.5rem 0', color: '#7f8c8d' }}>{event.description}</p>
-                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', color: '#7f8c8d' }}>
+                    <div className="assignment-content">
+                      <div className="assignment-info">
+                        <h3 className="assignment-title">{event.title}</h3>
+                        <p className="assignment-description">{event.description}</p>
+                        <div className="assignment-meta">
                           <span>📅 {new Date(event.date).toLocaleDateString()}</span>
                           <span>⏰ {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           <span>🎯 {event.points} points</span>
                         </div>
                       </div>
-                      <div
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: getStatusColor(status),
-                          color: 'white',
-                          borderRadius: '20px',
-                          fontSize: '0.85rem',
-                          fontWeight: 'bold'
-                        }}
-                      >
+                      <div className={`assignment-status status-${status}`}>
                         {status.toUpperCase()}
                       </div>
                     </div>
@@ -394,54 +327,31 @@ export default function Calendar() {
       {/* Selected Date Modal */}
       {selectedDate && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
+          className="modal-overlay"
           onClick={() => setSelectedDate(null)}
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              padding: '2rem',
-              borderRadius: '8px',
-              maxWidth: '500px',
-              maxHeight: '80vh',
-              overflow: 'auto'
-            }}
+            className="modal-content"
             onClick={(e) => e.stopPropagation()}
           >
             <h2>{selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
             
             {getEventsForDate(selectedDate).length === 0 ? (
-              <p style={{ color: '#7f8c8d', fontStyle: 'italic' }}>No assignments for this day</p>
+              <p className="no-assignments">No assignments for this day</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+              <div className="modal-events">
                 {getEventsForDate(selectedDate).map((event, i) => {
                   const status = isOverdue(event.date, event.status) ? 'overdue' : event.status;
                   return (
                     <div
                       key={i}
-                      style={{
-                        padding: '1rem',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '6px',
-                        borderLeft: `4px solid ${getStatusColor(status)}`
-                      }}
+                      className={`modal-event modal-event-${status}`}
                     >
-                      <h4 style={{ margin: '0 0 0.5rem 0' }}>{event.title}</h4>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#7f8c8d' }}>{event.description}</p>
-                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
+                      <h4 className="modal-event-title">{event.title}</h4>
+                      <p className="modal-event-description">{event.description}</p>
+                      <div className="modal-event-meta">
                         <span>🎯 {event.points} points</span>
-                        <span style={{ color: getStatusColor(status), fontWeight: 'bold' }}>
+                        <span className={`modal-event-status status-${status}`}>
                           {status.toUpperCase()}
                         </span>
                       </div>
@@ -453,16 +363,7 @@ export default function Calendar() {
             
             <button
               onClick={() => setSelectedDate(null)}
-              style={{
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                width: '100%'
-              }}
+              className="modal-close-btn"
             >
               Close
             </button>
@@ -473,62 +374,43 @@ export default function Calendar() {
       {/* Create Assignment Modal */}
       {showCreateModal && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
+          className="modal-overlay"
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              padding: '2rem',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              width: '90%',
-              maxHeight: '90vh',
-              overflow: 'auto'
-            }}
+            className="modal-content modal-large"
             onClick={(e) => e.stopPropagation()}
           >
             <h2>Create Assignment</h2>
-            <form onSubmit={handleCreateAssignment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Title *</label>
+            <form onSubmit={handleCreateAssignment} className="assignment-form">
+              <div className="form-group">
+                <label className="form-label">Title *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                  className="form-input"
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Description</label>
+              <div className="form-group">
+                <label className="form-label">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                  className="form-input"
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Module *</label>
+              <div className="form-group">
+                <label className="form-label">Module *</label>
                 <select
                   value={formData.module}
                   onChange={(e) => setFormData({ ...formData, module: e.target.value })}
                   required
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                  className="form-input"
                 >
                   <option value="">Select a module</option>
                   {modules.map(m => (
@@ -537,84 +419,67 @@ export default function Calendar() {
                 </select>
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Students *</label>
+              <div className="form-group">
+                <label className="form-label">Students *</label>
                 <select
                   multiple
                   value={formData.students}
                   onChange={(e) => setFormData({ ...formData, students: Array.from(e.target.selectedOptions, opt => opt.value) })}
                   required
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd', minHeight: '100px' }}
+                  className="form-input form-select-multiple"
                 >
                   {students.map(s => (
                     <option key={s._id} value={s._id}>{s.username} ({s.email})</option>
                   ))}
                 </select>
-                <small style={{ color: '#7f8c8d' }}>Hold Ctrl/Cmd to select multiple students</small>
+                <small className="form-hint">Hold Ctrl/Cmd to select multiple students</small>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Start Date</label>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Start Date</label>
                   <input
                     type="datetime-local"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                    className="form-input"
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Due Date *</label>
+                <div className="form-group">
+                  <label className="form-label">Due Date *</label>
                   <input
                     type="datetime-local"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                     required
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                    className="form-input"
                   />
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Points</label>
+              <div className="form-group">
+                <label className="form-label">Points</label>
                 <input
                   type="number"
                   value={formData.points}
                   onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) })}
                   min={0}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                  className="form-input"
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <div className="form-actions">
                 <button
                   type="submit"
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    backgroundColor: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
+                  className="form-submit-btn"
                 >
                   Create & Publish
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    backgroundColor: '#95a5a6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className="form-cancel-btn"
                 >
                   Cancel
                 </button>

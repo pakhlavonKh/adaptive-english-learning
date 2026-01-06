@@ -108,23 +108,9 @@ export default function Dashboard({ token, user, onLogout }) {
   if (checkingPath) {
     return (
       <div className="dashboard-container">
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #f3f3f3',
-            borderTop: '4px solid #667eea',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <p style={{ color: '#666', fontSize: '16px' }}>Setting up your dashboard...</p>
+        <div className="dashboard-loading-wrapper">
+          <div className="dashboard-spinner" />
+          <p className="dashboard-spinner-text">Setting up your dashboard...</p>
         </div>
       </div>
     );

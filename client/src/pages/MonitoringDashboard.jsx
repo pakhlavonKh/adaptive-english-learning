@@ -35,7 +35,7 @@ export default function MonitoringDashboard({ token }) {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div className="monitoring-loading">
         <h2>Loading monitoring data...</h2>
       </div>
     );
@@ -43,7 +43,7 @@ export default function MonitoringDashboard({ token }) {
 
   if (!dashboardData) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div className="monitoring-error">
         <h2>Failed to load monitoring data</h2>
       </div>
     );
@@ -74,12 +74,12 @@ export default function MonitoringDashboard({ token }) {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="monitoring-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="monitoring-header">
         <h1>📊 System Monitoring</h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="monitoring-controls">
+          <label className="auto-refresh-label">
             <input
               type="checkbox"
               checked={autoRefresh}
@@ -91,7 +91,7 @@ export default function MonitoringDashboard({ token }) {
             value={refreshInterval}
             onChange={(e) => setRefreshInterval(Number(e.target.value))}
             disabled={!autoRefresh}
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+            className="refresh-interval-select"
           >
             <option value={1000}>1s</option>
             <option value={5000}>5s</option>
@@ -100,14 +100,7 @@ export default function MonitoringDashboard({ token }) {
           </select>
           <button
             onClick={fetchDashboardData}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className="refresh-btn"
           >
             🔄 Refresh
           </button>
@@ -115,47 +108,33 @@ export default function MonitoringDashboard({ token }) {
       </div>
 
       {/* Overall Health Status */}
-      <div
-        style={{
-          backgroundColor: 'white',
-          padding: '2rem',
-          borderRadius: '8px',
-          marginBottom: '2rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          borderLeft: `6px solid ${getStatusColor(health.status)}`
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-          <span style={{ fontSize: '3rem' }}>{getStatusIcon(health.status)}</span>
-          <div>
-            <h2 style={{ margin: 0 }}>System Status: {health.status.toUpperCase()}</h2>
-            <p style={{ margin: '0.5rem 0 0 0', color: '#7f8c8d' }}>
+      <div className={`health-status-card health-${health.status}`}>
+        <div className="health-header">
+          <span className="health-icon">{getStatusIcon(health.status)}</span>
+          <div className="health-info">
+            <h2>System Status: {health.status.toUpperCase()}</h2>
+            <p className="health-timestamp">
               Last check: {new Date(health.lastCheck).toLocaleString()}
             </p>
           </div>
         </div>
 
         {/* Health Checks Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
+        <div className="health-checks-grid">
           {Object.entries(health.checks).map(([name, check]) => (
             <div
               key={name}
-              style={{
-                padding: '1rem',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '6px',
-                borderLeft: `4px solid ${getStatusColor(check.status)}`
-              }}
+              className={`health-check-card health-check-${check.status}`}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <strong style={{ textTransform: 'capitalize' }}>{name}</strong>
+              <div className="health-check-header">
+                <strong className="health-check-name">{name}</strong>
                 <span>{getStatusIcon(check.status)}</span>
               </div>
-              <div style={{ fontSize: '0.85rem', color: '#7f8c8d' }}>
+              <div className="health-check-details">
                 {check.heapUsed && <div>Memory: {check.heapUsed} / {check.heapTotal} ({check.usagePercent})</div>}
                 {check.formatted && <div>Uptime: {check.formatted}</div>}
                 {check.connected !== undefined && <div>Connected: {check.connected ? 'Yes' : 'No'}</div>}
-                {check.error && <div style={{ color: '#e74c3c' }}>Error: {check.error}</div>}
+                {check.error && <div className="health-check-error">Error: {check.error}</div>}
               </div>
             </div>
           ))}
@@ -163,24 +142,24 @@ export default function MonitoringDashboard({ token }) {
       </div>
 
       {/* Performance Metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="metrics-grid">
         {/* Requests */}
-        <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ margin: '0 0 1rem 0' }}>📈 Requests</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div className="metric-card">
+          <h3 className="metric-title">📈 Requests</h3>
+          <div className="metric-stats">
+            <div className="metric-stat">
               <span>Total:</span>
               <strong>{performance.requests.total.toLocaleString()}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Success:</span>
-              <strong style={{ color: '#27ae60' }}>{performance.requests.success.toLocaleString()}</strong>
+              <strong className="text-success">{performance.requests.success.toLocaleString()}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Errors:</span>
-              <strong style={{ color: '#e74c3c' }}>{performance.requests.errors.toLocaleString()}</strong>
+              <strong className="text-error">{performance.requests.errors.toLocaleString()}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Success Rate:</span>
               <strong>{performance.requests.successRate}</strong>
             </div>
@@ -188,26 +167,26 @@ export default function MonitoringDashboard({ token }) {
         </div>
 
         {/* Response Time */}
-        <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ margin: '0 0 1rem 0' }}>⚡ Response Time</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div className="metric-card">
+          <h3 className="metric-title">⚡ Response Time</h3>
+          <div className="metric-stats">
+            <div className="metric-stat">
               <span>Average:</span>
               <strong>{performance.responseTime.average}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Min:</span>
-              <strong style={{ color: '#27ae60' }}>{performance.responseTime.min}</strong>
+              <strong className="text-success">{performance.responseTime.min}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Max:</span>
-              <strong style={{ color: '#e74c3c' }}>{performance.responseTime.max}</strong>
+              <strong className="text-error">{performance.responseTime.max}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>P95:</span>
               <strong>{performance.responseTime.p95}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>P99:</span>
               <strong>{performance.responseTime.p99}</strong>
             </div>
@@ -215,22 +194,22 @@ export default function MonitoringDashboard({ token }) {
         </div>
 
         {/* System Info */}
-        <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ margin: '0 0 1rem 0' }}>💻 System</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div className="metric-card">
+          <h3 className="metric-title">💻 System</h3>
+          <div className="metric-stats">
+            <div className="metric-stat">
               <span>Uptime:</span>
               <strong>{performance.uptime.formatted}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Node Version:</span>
               <strong>{system.nodeVersion}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Platform:</span>
               <strong>{system.platform}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="metric-stat">
               <span>Process ID:</span>
               <strong>{system.pid}</strong>
             </div>
@@ -239,39 +218,39 @@ export default function MonitoringDashboard({ token }) {
       </div>
 
       {/* Endpoint Metrics */}
-      <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-        <h3 style={{ margin: '0 0 1rem 0' }}>🎯 Endpoint Performance</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="endpoints-card">
+        <h3 className="endpoints-title">🎯 Endpoint Performance</h3>
+        <div className="endpoints-table-wrapper">
+          <table className="endpoints-table">
             <thead>
-              <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #ddd' }}>
-                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Endpoint</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Total</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Success</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Errors</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Error Rate</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Avg Response</th>
+              <tr className="endpoints-table-header">
+                <th className="text-left">Endpoint</th>
+                <th className="text-right">Total</th>
+                <th className="text-right">Success</th>
+                <th className="text-right">Errors</th>
+                <th className="text-right">Error Rate</th>
+                <th className="text-right">Avg Response</th>
               </tr>
             </thead>
             <tbody>
               {endpoints.slice(0, 20).map((endpoint, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.75rem', fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                <tr key={idx} className="endpoints-table-row">
+                  <td className="endpoint-name">
                     {endpoint.endpoint}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                  <td className="text-right">
                     {endpoint.total.toLocaleString()}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right', color: '#27ae60' }}>
+                  <td className="text-right text-success">
                     {endpoint.success.toLocaleString()}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right', color: endpoint.errors > 0 ? '#e74c3c' : '#7f8c8d' }}>
+                  <td className={`text-right ${endpoint.errors > 0 ? 'text-error' : 'text-muted'}`}>
                     {endpoint.errors.toLocaleString()}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right', color: parseFloat(endpoint.errorRate) > 5 ? '#e74c3c' : '#7f8c8d' }}>
+                  <td className={`text-right ${parseFloat(endpoint.errorRate) > 5 ? 'text-error' : 'text-muted'}`}>
                     {endpoint.errorRate}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                  <td className="text-right">
                     {endpoint.avgResponseTime}
                   </td>
                 </tr>
@@ -280,7 +259,7 @@ export default function MonitoringDashboard({ token }) {
           </table>
         </div>
         {endpoints.length > 20 && (
-          <p style={{ marginTop: '1rem', color: '#7f8c8d', textAlign: 'center', fontSize: '0.9rem' }}>
+          <p className="endpoints-note">
             Showing top 20 of {endpoints.length} endpoints
           </p>
         )}
