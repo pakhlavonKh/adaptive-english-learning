@@ -28,6 +28,11 @@ import * as assessmentService from './services/assessmentService.js';
 import userService from './services/userService.js';
 import lmsService from './services/lmsService.js';
 import * as auditService from './services/auditService.js';
+import gdprService from './services/gdprService.js';
+import reportExportService from './services/reportExportService.js';
+import gamificationService from './services/gamificationService.js';
+import schedulingService from './services/schedulingService.js';
+import monitoringService from './services/monitoringService.js';
 
 
 const app = express();
@@ -45,6 +50,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret';
 
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
+
+// Apply monitoring middleware to track all requests (NFR1-3)
+app.use(monitoringService.requestTracker());
 
 // Register
 app.post('/api/register', async (req, res) => {
@@ -324,6 +332,14 @@ app.post('/api/submit', async (req, res) => {
     user.theta = newTheta;
     await user.save();
 
+    // Check for new badges (FR3: Gamification)
+    let newBadges = [];
+    try {
+      newBadges = await gamificationService.checkAndAwardBadges(userId);
+    } catch (badgeError) {
+      console.error('Badge check failed:', badgeError);
+    }
+
     // Generate AI feedback if enabled and not already provided by NLP
     if (!aiFeedback && process.env.GEMINI_API_KEY && process.env.ENABLE_AI_FEEDBACK === 'true') {
       try {
@@ -343,10 +359,94 @@ app.post('/api/submit', async (req, res) => {
       correct: finalCorrect, 
       nextReview, 
       aiFeedback,
-      nlpEvaluation
+      nlpEvaluation,
+      newBadges // Include newly earned badges in response
     });
   } catch (e) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// Evaluate speech response (FR23: Voice Input for Speaking Module)
+app.post('/api/evaluate-speech', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const { questionId, transcript } = req.body;
+
+  if (!token) return res.status(401).json({ error: 'No token' });
+  if (!transcript || transcript.trim().length === 0) {
+    return res.status(400).json({ error: 'No speech transcript provided' });
+  }
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const question = await QuestionModel.findById(questionId);
+    if (!question) return res.status(404).json({ error: 'Question not found' });
+
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Analyze speech using NLP service
+    const speechEvaluation = assessmentService.NLPService.analyzeSpeech(transcript);
+    
+    // Consider speech response correct if grade >= 60 (more lenient than text)
+    const finalCorrect = speechEvaluation.grade >= 60;
+    
+    // Calculate spaced repetition interval
+    let interval = 1;
+    const last = await ResponseModel.findOne({ user: userId, question: questionId }).sort({ timestamp: -1 });
+    if (last && last.correct) {
+      const daysSince = (Date.now() - new Date(last.timestamp).getTime()) / 86400000;
+      interval = Math.max(1, daysSince * 2);
+    }
+
+    const nextReview = new Date(Date.now() + interval * 24 * 60 * 60 * 1000);
+    
+    // Store response with speech-specific data
+    await ResponseModel.create({ 
+      user: userId, 
+      question: questionId, 
+      correct: finalCorrect, 
+      nextReview,
+      userAnswer: transcript,
+      nlpGrade: speechEvaluation.grade,
+      nlpConfidence: speechEvaluation.confidence,
+      isSpeech: true,
+      speechMetrics: {
+        fluency: speechEvaluation.fluency,
+        vocabulary: speechEvaluation.vocabulary,
+        coherence: speechEvaluation.coherence,
+        wordCount: speechEvaluation.wordCount,
+        sentenceCount: speechEvaluation.sentenceCount
+      }
+    });
+
+    // Update user ability (simple Elo-like)
+    const k = 0.5;
+    const expected = 1 / (1 + Math.exp(-((user.theta || 0) - (question.difficulty || 0))));
+    const newTheta = (user.theta || 0) + k * ((finalCorrect ? 1 : 0) - expected);
+
+    user.theta = newTheta;
+    await user.save();
+
+    // Check for new badges (FR3: Gamification)
+    let newBadges = [];
+    try {
+      newBadges = await gamificationService.checkAndAwardBadges(userId);
+    } catch (badgeError) {
+      console.error('Badge check failed:', badgeError);
+    }
+
+    res.json({ 
+      newTheta, 
+      correct: finalCorrect, 
+      nextReview,
+      speechEvaluation,
+      feedback: speechEvaluation.feedback,
+      newBadges // Include newly earned badges
+    });
+  } catch (e) {
+    console.error('Speech evaluation error:', e);
+    res.status(500).json({ error: 'Speech evaluation failed', details: e.message });
   }
 });
 
@@ -670,6 +770,153 @@ app.put('/api/profile', async (req, res) => {
   }
 });
 
+// ===== GDPR DATA PRIVACY ENDPOINTS (FR19) =====
+
+// Export user data (GDPR Right to Data Portability)
+app.get('/api/gdpr/export', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const dataExport = await gdprService.exportUserData(userId);
+    
+    // Log data export request
+    await auditService.logAction(
+      'DATA_EXPORT',
+      dataExport.user.username,
+      'User requested data export (GDPR)',
+      req.ip,
+      'SUCCESS',
+      userId
+    );
+    
+    res.json({
+      success: true,
+      data: dataExport
+    });
+  } catch (e) {
+    console.error('Data export error:', e);
+    res.status(500).json({ error: 'Failed to export data', details: e.message });
+  }
+});
+
+// Delete user account and all data (GDPR Right to Erasure)
+app.delete('/api/gdpr/delete-account', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const { password, reason } = req.body;
+    
+    // Verify password before deletion
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+    
+    // Log deletion request before deleting
+    await auditService.logAction(
+      'ACCOUNT_DELETION_REQUEST',
+      user.username,
+      `User requested account deletion: ${reason || 'No reason provided'}`,
+      req.ip,
+      'SUCCESS',
+      userId
+    );
+    
+    const deletionSummary = await gdprService.deleteUserData(userId, reason);
+    
+    res.json({
+      success: true,
+      message: 'Account and all associated data have been permanently deleted',
+      summary: deletionSummary
+    });
+  } catch (e) {
+    console.error('Account deletion error:', e);
+    res.status(500).json({ error: 'Failed to delete account', details: e.message });
+  }
+});
+
+// Get consent status
+app.get('/api/gdpr/consent', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const consentStatus = await gdprService.getConsentStatus(userId);
+    res.json(consentStatus);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Update consent preferences
+app.put('/api/gdpr/consent', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const consents = req.body;
+    
+    const updated = await gdprService.updateConsent(userId, consents);
+    
+    // Log consent update
+    await auditService.logAction(
+      'CONSENT_UPDATE',
+      (await UserModel.findById(userId)).username,
+      `User updated consent preferences`,
+      req.ip,
+      'SUCCESS',
+      userId
+    );
+    
+    res.json(updated);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: Get user data (for support/compliance)
+app.get('/api/admin/user-data/:userId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId: adminId } = jwt.verify(token, JWT_SECRET);
+    const admin = await UserModel.findById(adminId);
+    
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const targetUserId = req.params.userId;
+    const dataExport = await gdprService.exportUserData(targetUserId);
+    
+    // Log admin data access
+    await auditService.logAction(
+      'ADMIN_DATA_ACCESS',
+      admin.username,
+      `Admin accessed user data for: ${dataExport.user.username}`,
+      req.ip,
+      'SUCCESS',
+      adminId
+    );
+    
+    res.json(dataExport);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== END GDPR ENDPOINTS =====
+
 // Admin: Get all users
 app.get('/api/admin/users', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -688,6 +935,429 @@ app.get('/api/admin/users', async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+// ===== REPORT EXPORT ENDPOINTS (FR13) =====
+
+// Export student progress report as CSV
+app.get('/api/reports/student/:userId/csv', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId: requesterId } = jwt.verify(token, JWT_SECRET);
+    const requester = await UserModel.findById(requesterId);
+    
+    // Students can export their own data, teachers/admins can export any student's data
+    if (requesterId !== req.params.userId && !['teacher', 'admin'].includes(requester?.role)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const reportData = await reportExportService.generateStudentReport(req.params.userId);
+    const csv = reportExportService.toCSV(reportData, 'student');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="student-report-${req.params.userId}.csv"`);
+    res.send(csv);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to generate report', details: e.message });
+  }
+});
+
+// Export class report as CSV (teachers/admins only)
+app.post('/api/reports/class/csv', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const requester = await UserModel.findById(userId);
+    
+    if (!['teacher', 'admin'].includes(requester?.role)) {
+      return res.status(403).json({ error: 'Teacher or admin access required' });
+    }
+
+    const { studentIds } = req.body;
+    if (!studentIds || !Array.isArray(studentIds)) {
+      return res.status(400).json({ error: 'studentIds array required' });
+    }
+
+    const reportData = await reportExportService.generateClassReport(studentIds);
+    const csv = reportExportService.toCSV(reportData, 'class');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="class-report-${Date.now()}.csv"`);
+    res.send(csv);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to generate class report', details: e.message });
+  }
+});
+
+// Get student report data as JSON (for display in UI)
+app.get('/api/reports/student/:userId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId: requesterId } = jwt.verify(token, JWT_SECRET);
+    const requester = await UserModel.findById(requesterId);
+    
+    if (requesterId !== req.params.userId && !['teacher', 'admin'].includes(requester?.role)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const reportData = await reportExportService.generateStudentReport(req.params.userId);
+    res.json(reportData);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to generate report', details: e.message });
+  }
+});
+
+// ===== END REPORT EXPORT ENDPOINTS =====
+
+// ===== GAMIFICATION ENDPOINTS (FR3: Achievement Badges/Points) =====
+
+// Get user's badges and points
+app.get('/api/gamification/user/:userId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId: requesterId } = jwt.verify(token, JWT_SECRET);
+    
+    // Users can view their own data, teachers/admins can view any user's data
+    if (requesterId !== req.params.userId) {
+      const requester = await UserModel.findById(requesterId);
+      if (!['teacher', 'admin'].includes(requester?.role)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+    }
+
+    const gamificationData = await gamificationService.getUserGamification(req.params.userId);
+    res.json(gamificationData);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get leaderboard
+app.get('/api/gamification/leaderboard', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    jwt.verify(token, JWT_SECRET);
+    const limit = parseInt(req.query.limit) || 10;
+    const leaderboard = await gamificationService.getLeaderboard(limit);
+    res.json(leaderboard);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Initialize default badges (admin only)
+app.post('/api/gamification/init-badges', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const admin = await UserModel.findById(userId);
+    
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    await gamificationService.initializeDefaultBadges();
+    res.json({ success: true, message: 'Default badges initialized' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Check and award badges (called after user actions)
+app.post('/api/gamification/check-badges/:userId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId: requesterId } = jwt.verify(token, JWT_SECRET);
+    
+    // Only the user themselves can trigger badge checks
+    if (requesterId !== req.params.userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const newBadges = await gamificationService.checkAndAwardBadges(req.params.userId);
+    
+    if (newBadges.length > 0) {
+      res.json({
+        success: true,
+        newBadges,
+        message: `Congratulations! You earned ${newBadges.length} new badge(s)!`
+      });
+    } else {
+      res.json({
+        success: true,
+        newBadges: [],
+        message: 'No new badges earned'
+      });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== END GAMIFICATION ENDPOINTS =====
+
+// ===== SCHEDULING ENDPOINTS (FR12: Schedule Lessons, Assignments, and Deadlines) =====
+
+// Create assignment (teachers only)
+app.post('/api/assignments', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const teacher = await UserModel.findById(userId);
+    
+    if (!['teacher', 'admin'].includes(teacher?.role)) {
+      return res.status(403).json({ error: 'Teacher access required' });
+    }
+
+    const assignment = await schedulingService.createAssignment(userId, req.body);
+    res.json(assignment);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get assignments (filtered by role)
+app.get('/api/assignments', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+
+    let assignments;
+    if (['teacher', 'admin'].includes(user.role)) {
+      assignments = await schedulingService.getTeacherAssignments(userId, req.query);
+    } else {
+      assignments = await schedulingService.getStudentAssignments(userId, req.query);
+    }
+
+    res.json(assignments);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Publish assignment
+app.post('/api/assignments/:assignmentId/publish', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const teacher = await UserModel.findById(userId);
+    
+    if (!['teacher', 'admin'].includes(teacher?.role)) {
+      return res.status(403).json({ error: 'Teacher access required' });
+    }
+
+    const assignment = await schedulingService.publishAssignment(req.params.assignmentId, userId);
+    res.json(assignment);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Submit assignment (students)
+app.post('/api/assignments/:assignmentId/submit', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const { score } = req.body;
+
+    const assignment = await schedulingService.submitAssignment(
+      req.params.assignmentId,
+      userId,
+      score
+    );
+
+    res.json({ success: true, assignment });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Update assignment
+app.put('/api/assignments/:assignmentId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const teacher = await UserModel.findById(userId);
+    
+    if (!['teacher', 'admin'].includes(teacher?.role)) {
+      return res.status(403).json({ error: 'Teacher access required' });
+    }
+
+    const assignment = await schedulingService.updateAssignment(
+      req.params.assignmentId,
+      userId,
+      req.body
+    );
+
+    res.json(assignment);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Delete assignment
+app.delete('/api/assignments/:assignmentId', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const teacher = await UserModel.findById(userId);
+    
+    if (!['teacher', 'admin'].includes(teacher?.role)) {
+      return res.status(403).json({ error: 'Teacher access required' });
+    }
+
+    const success = await schedulingService.deleteAssignment(req.params.assignmentId, userId);
+    
+    if (success) {
+      res.json({ success: true, message: 'Assignment deleted' });
+    } else {
+      res.status(404).json({ error: 'Assignment not found' });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get calendar view
+app.get('/api/calendar', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+
+    const { startDate, endDate } = req.query;
+
+    const events = await schedulingService.getCalendar(
+      userId,
+      user.role,
+      startDate,
+      endDate
+    );
+
+    res.json(events);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== END SCHEDULING ENDPOINTS =====
+
+// ===== MONITORING ENDPOINTS (NFR1-3: Performance Monitoring, Uptime Tracking, Health Checks) =====
+
+// Public health check endpoint (no authentication required)
+app.get('/health', async (req, res) => {
+  try {
+    const mongoose = await import('mongoose');
+    const health = await monitoringService.performHealthCheck({ mongoose });
+    
+    const statusCode = health.status === 'healthy' ? 200 : 
+                       health.status === 'degraded' ? 200 : 503;
+    
+    res.status(statusCode).json(health);
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      error: error.message,
+      timestamp: Date.now()
+    });
+  }
+});
+
+// Performance metrics (admin only)
+app.get('/api/monitoring/metrics', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const metrics = monitoringService.getPerformanceMetrics();
+    res.json(metrics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Endpoint-specific metrics (admin only)
+app.get('/api/monitoring/endpoints', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const endpoints = monitoringService.getEndpointMetrics();
+    res.json(endpoints);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Complete monitoring dashboard data (admin only)
+app.get('/api/monitoring/dashboard', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+
+  try {
+    const { userId } = jwt.verify(token, JWT_SECRET);
+    const user = await UserModel.findById(userId);
+    
+    if (user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const mongoose = await import('mongoose');
+    
+    // Perform fresh health check
+    await monitoringService.performHealthCheck({ mongoose });
+    
+    // Get all monitoring data
+    const data = monitoringService.getMonitoringData({ mongoose });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===== END MONITORING ENDPOINTS =====
 
 // Admin: Update user role
 app.put('/api/admin/users/:userId/role', async (req, res) => {

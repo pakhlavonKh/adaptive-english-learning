@@ -1978,6 +1978,49 @@ form.card h3 {
   margin-bottom: 5px;
 }
 
+/* Speech Metrics Display */
+.speech-metrics {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.speech-metrics h5 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #667eea;
+  font-weight: 700;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: white;
+  border-radius: 6px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.metric-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.metric-value {
+  font-weight: 700;
+  color: #667eea;
+}
+
 .btn-ai-help {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;

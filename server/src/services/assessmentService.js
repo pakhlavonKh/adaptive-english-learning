@@ -305,6 +305,61 @@ export const NLPService = {
       grade,
       feedback
     };
+  },
+
+  /**
+   * Analyze speech/spoken response for speaking module (FR23)
+   * Evaluates fluency, vocabulary, and coherence from transcribed speech
+   */
+  analyzeSpeech(transcript, expectedTopic = null) {
+    const response = (transcript || '').trim();
+    if (!response) {
+      return {
+        confidence: 0,
+        grade: 0,
+        fluency: 0,
+        vocabulary: 0,
+        coherence: 0,
+        feedback: 'No speech detected. Please try speaking again.'
+      };
+    }
+
+    const words = response.split(/\s+/).filter(Boolean);
+    const sentences = response.split(/[.!?]+/).filter(Boolean).length || 1;
+    const uniqueWords = new Set(words.map(word => word.toLowerCase().replace(/[^a-z']/g, ''))).size;
+    
+    // Fluency: Based on length and natural speech patterns
+    const fluencyScore = Math.min((words.length / 50) * 0.7 + (sentences / 3) * 0.3, 1);
+    
+    // Vocabulary: Diversity and complexity of word usage
+    const vocabularyScore = Math.min(uniqueWords / Math.max(words.length * 0.7, 1), 1);
+    
+    // Coherence: Sentence structure and flow
+    const avgWordsPerSentence = words.length / Math.max(sentences, 1);
+    const coherenceScore = avgWordsPerSentence >= 5 && avgWordsPerSentence <= 20 ? 0.9 : 0.6;
+    
+    // Overall score
+    const combinedScore = (fluencyScore * 0.4) + (vocabularyScore * 0.3) + (coherenceScore * 0.3);
+    const confidence = Number(Math.min(Math.max(combinedScore, 0), 1).toFixed(2));
+    const grade = Math.round(confidence * 100);
+
+    let feedback = 'Excellent speaking performance! Clear, fluent, and well-structured.';
+    if (grade < 40) {
+      feedback = 'Try to speak more and use complete sentences. Practice will help!';
+    } else if (grade < 70) {
+      feedback = 'Good effort! Try to add more details and speak more naturally.';
+    }
+
+    return {
+      confidence,
+      grade,
+      fluency: Math.round(fluencyScore * 100),
+      vocabulary: Math.round(vocabularyScore * 100),
+      coherence: Math.round(coherenceScore * 100),
+      wordCount: words.length,
+      sentenceCount: sentences,
+      feedback
+    };
   }
 };
 

@@ -4,6 +4,7 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String }, // Optional for OAuth users
   theta: { type: Number, default: 0 },
+  points: { type: Number, default: 0 }, // Gamification points (FR3)
   role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
   email: { type: String },
   firstName: { type: String },
@@ -29,7 +30,14 @@ const UserSchema = new mongoose.Schema({
     }],
     gpa: Number,
     lastSync: Date
-  }
+  },
+  
+  // GDPR Consent (FR19)
+  dataProcessingConsent: { type: Boolean, default: true },
+  marketingConsent: { type: Boolean, default: false },
+  analyticsConsent: { type: Boolean, default: true },
+  consentDate: { type: Date, default: Date.now },
+  consentUpdatedAt: { type: Date }
 }, { timestamps: true });
 
 export const UserModel = mongoose.models.User || mongoose.model('User', UserSchema);

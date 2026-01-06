@@ -5,6 +5,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Support from "./pages/Support";
+import Privacy from "./pages/Privacy";
+import Badges from "./pages/Badges";
+import Calendar from "./pages/Calendar";
+import MonitoringDashboard from "./pages/MonitoringDashboard";
 import Account from "./pages/Account";
 import NotificationList from "./components/Notifications/NotificationList";
 import { initBackgroundSync } from "./utils/backgroundSync";
@@ -85,6 +89,46 @@ export default function App() {
               <Account token={token} user={user} onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/privacy" 
+          element={
+            token ? (
+              <Privacy token={token} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/badges" 
+          element={
+            token ? (
+              <Badges token={token} user={user} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/calendar" 
+          element={
+            token ? (
+              <Calendar token={token} user={user} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/monitoring" 
+          element={
+            token && user?.role === 'admin' ? (
+              <MonitoringDashboard token={token} />
+            ) : (
+              <Navigate to="/dashboard" replace />
             )
           } 
         />
