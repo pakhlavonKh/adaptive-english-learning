@@ -68,12 +68,24 @@ export default function Login({ onLogin }) {
         <div className="form-group">
           <label>Email or Username</label>
           <div className="input-wrapper">
-            <Mail size={20} className="input-icon" />
             <input 
               type="text"
               placeholder="Enter your username" 
               value={username} 
               onChange={e=>setUsername(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Password</label>
+          <div className="input-wrapper">
+            <input 
+              type="password"
+              placeholder="Enter your password" 
+              value={password} 
+              onChange={e=>setPassword(e.target.value)}
               required
             />
           </div>
@@ -100,20 +112,6 @@ export default function Login({ onLogin }) {
 
         <div className="auth-divider">
           <span/>
-        </div>
-
-        <div className="form-group">
-          <label>Password</label>
-          <div className="input-wrapper">
-            <Lock size={20} className="input-icon" />
-            <input 
-              type="password"
-              placeholder="Enter your password" 
-              value={password} 
-              onChange={e=>setPassword(e.target.value)}
-              required
-            />
-          </div>
         </div>
 
         <button type="submit" className="auth-button" disabled={loading}>

@@ -1,12 +1,11 @@
 /**
  * Enhanced User Service
- * Handles user registration, OAuth, and LMS integration
+ * Handles user registration and OAuth
  */
 
 import bcrypt from 'bcrypt';
 import UserModel from '../models/user.js';
 import oauthService from './oauthService.js';
-import lmsService from './lmsService.js';
 
 class UserService {
   /**
@@ -23,14 +22,11 @@ class UserService {
         throw new Error('User already exists');
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Create user
+      // Create user (password will be hashed by pre-save middleware)
       const user = await UserModel.create({
         username,
         email,
-        password: hashedPassword,
+        password,
         emailVerified: false,
         verificationToken: this.generateVerificationToken(),
         role: 'student',
@@ -69,15 +65,6 @@ class UserService {
       user.emailVerified = true;
       user.verificationToken = undefined;
       await user.save();
-
-      // Sync with external data sources (LMS)
-      if (user.lmsStudentId) {
-        const lmsData = await lmsService.fetchCanvasData(user.lmsStudentId);
-        if (lmsData) {
-          const updatedUser = await lmsService.syncUserLMSData(user, lmsData);
-          await UserModel.findByIdAndUpdate(user._id, updatedUser);
-        }
-      }
 
       return {
         success: true,
@@ -163,44 +150,6 @@ class UserService {
       };
     } catch (error) {
       console.error('OAuth login error:', error);
-      return {
-        success: false,
-        message: error.message
-      };
-    }
-  }
-
-  /**
-   * Sync user with LMS data
-   */
-  async syncWithLMS(userId, lmsStudentId) {
-    try {
-      const user = await UserModel.findById(userId);
-      if (!user) throw new Error('User not found');
-
-      // Fetch LMS data
-      const lmsData = await lmsService.fetchCanvasData(lmsStudentId);
-      if (!lmsData) {
-        throw new Error('Failed to fetch LMS data');
-      }
-
-      // Sync user profile with LMS data
-      const updatedUserData = await lmsService.syncUserLMSData(user, lmsData);
-      const updatedUser = await UserModel.findByIdAndUpdate(
-        userId,
-        { ...updatedUserData, lmsStudentId },
-        { new: true }
-      );
-
-      console.log(`[LMS Sync] User ${userId} synced with LMS data`);
-
-      return {
-        success: true,
-        user: updatedUser,
-        lmsData
-      };
-    } catch (error) {
-      console.error('LMS sync error:', error);
       return {
         success: false,
         message: error.message

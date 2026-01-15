@@ -7,7 +7,7 @@ const QuestionSchema = new mongoose.Schema({
   discrimination: { type: Number, default: 1 },
   skill: { type: String, enum: ['reading', 'writing', 'listening', 'speaking'], required: true },
   type: { type: String, default: 'objective' },
-  choices: [{ type: String }]
+  options: [{ type: String }]  // Multiple choice options
 }, { timestamps: true });
 
 export const QuestionModel = mongoose.models.Question || mongoose.model('Question', QuestionSchema);

@@ -125,12 +125,10 @@ async function seedDatabase() {
     
     const existingUsers = await UserModel.countDocuments();
     if (existingUsers === 0) {
-      const bcrypt = await import('bcrypt');
-      
       const sampleUsers = [
         {
           username: 'student_demo',
-          password: await bcrypt.hash('password123', 10),
+          password: 'password123',
           email: 'student@example.com',
           firstName: 'Demo',
           lastName: 'Student',
@@ -139,7 +137,7 @@ async function seedDatabase() {
         },
         {
           username: 'teacher_demo',
-          password: await bcrypt.hash('password123', 10),
+          password: 'password123',
           email: 'teacher@example.com',
           firstName: 'Demo',
           lastName: 'Teacher',
@@ -148,7 +146,7 @@ async function seedDatabase() {
         },
         {
           username: 'admin_demo',
-          password: await bcrypt.hash('password123', 10),
+          password: 'password123',
           email: 'admin@example.com',
           firstName: 'Demo',
           lastName: 'Admin',

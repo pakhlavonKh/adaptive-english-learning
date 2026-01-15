@@ -37,10 +37,7 @@ class GDPRService {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          theta: user.theta,
-          createdAt: user.createdAt,
-          lmsData: user.lmsData,
-          lmsStudentId: user.lmsStudentId
+          createdAt: user.createdAt
         },
         responses: responses.map(r => ({
           questionId: r.question,

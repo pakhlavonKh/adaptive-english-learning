@@ -26,7 +26,6 @@ import * as dataCollectionService from './services/dataCollectionService.js';
 import aiService from './services/aiService.js';
 import * as assessmentService from './services/assessmentService.js';
 import userService from './services/userService.js';
-import lmsService from './services/lmsService.js';
 import * as auditService from './services/auditService.js';
 import gdprService from './services/gdprService.js';
 import reportExportService from './services/reportExportService.js';
@@ -57,9 +56,8 @@ app.use(monitoringService.requestTracker());
 // Register
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
   try {
-    const user = await UserModel.create({ username, password: hashed });
+    const user = await UserModel.create({ username, password });
     
     // Log registration
     await auditService.logAction(
@@ -129,7 +127,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ===== OAUTH & LMS ENDPOINTS =====
+// ===== OAUTH ENDPOINTS =====
 
 // OAuth Login (Google)
 app.post('/api/auth/google', async (req, res) => {
@@ -170,71 +168,6 @@ app.post('/api/verify-email', async (req, res) => {
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: 'Verification failed' });
-  }
-});
-
-// Sync with LMS (Canvas)
-app.post('/api/lms/sync', async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  const { lmsStudentId } = req.body;
-  
-  if (!token) return res.status(401).json({ error: 'No token' });
-  
-  try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
-    const result = await userService.syncWithLMS(userId, lmsStudentId);
-    
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'LMS sync failed' });
-  }
-});
-
-// Get LMS Data
-app.get('/api/lms/data', async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) return res.status(401).json({ error: 'No token' });
-  
-  try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
-    const user = await UserModel.findById(userId);
-    
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    
-    res.json({
-      lmsData: user.lmsData,
-      lmsStudentId: user.lmsStudentId,
-      lastSync: user.lmsData?.lastSync
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch LMS data' });
-  }
-});
-
-// Import LMS Assignments as Modules
-app.post('/api/lms/import-assignments', async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) return res.status(401).json({ error: 'No token' });
-  
-  try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
-    const user = await UserModel.findById(userId);
-    
-    if (!user || !user.lmsData) {
-      return res.status(404).json({ error: 'No LMS data found. Please sync first.' });
-    }
-    
-    const importedModules = await lmsService.importLMSAssignments(userId, user.lmsData);
-    
-    res.json({
-      success: true,
-      imported: importedModules.length,
-      modules: importedModules
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to import assignments' });
   }
 });
 

@@ -12,8 +12,6 @@ export const register = (username, password) =>
 export const login = (username, password) =>
   API.post("/login", { username, password }).then((r) => r.data);
 
-/* ================= OAUTH & LMS ================= */
-
 // Google OAuth Login
 export const loginWithGoogle = (token) =>
   API.post("/auth/google", { token }).then((r) => r.data);
@@ -21,24 +19,6 @@ export const loginWithGoogle = (token) =>
 // Email Verification
 export const verifyEmail = (token) =>
   API.post("/verify-email", { token }).then((r) => r.data);
-
-// Sync with LMS (Canvas)
-export const syncWithLMS = (token, lmsStudentId) =>
-  API.post("/lms/sync", { lmsStudentId }, {
-    headers: { Authorization: `Bearer ${token}` }
-  }).then((r) => r.data);
-
-// Get LMS Data
-export const getLMSData = (token) =>
-  API.get("/lms/data", {
-    headers: { Authorization: `Bearer ${token}` }
-  }).then((r) => r.data);
-
-// Import LMS Assignments
-export const importLMSAssignments = (token) =>
-  API.post("/lms/import-assignments", {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  }).then((r) => r.data);
 
 /* ================= ASSESSMENT ================= */
 

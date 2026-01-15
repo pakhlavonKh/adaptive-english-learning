@@ -9,12 +9,12 @@ export default function LearningPath({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeQuestion, setActiveQuestion] = useState(null);
-  const [answer, setAnswer] = useState("");
-  const [feedback, setFeedback] = useState(null);
+  const [answers, setAnswers] = useState({}); // Per-question answer state
+  const [feedback, setFeedback] = useState({});  // Changed to object to track per question
   const [aiExplanation, setAiExplanation] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
-  const [voiceAnswer, setVoiceAnswer] = useState("");
+  const [voiceAnswers, setVoiceAnswers] = useState({}); // Per-question voice answers
 
   useEffect(() => {
     loadPath();
@@ -39,7 +39,7 @@ export default function LearningPath({ token }) {
   async function openModule(m) {
     setActiveModule(m);
     setActiveQuestion(null);
-    setFeedback(null);
+    setFeedback({});  // Reset feedback for new module
     setAiExplanation(null);
     setLoading(true);
     setError("");
@@ -61,18 +61,23 @@ export default function LearningPath({ token }) {
     if (!item.question) return;
     
     const question = item.question;
+    const questionId = question._id || item.id;
     const isSpeaking = question.skill === 'speaking' || item.type === 'speaking';
     
-    // Use voiceAnswer for speaking questions, otherwise use text answer
-    const userAnswer = isSpeaking ? (voiceAnswer || '').trim() : (answer || '').trim();
+    // Use per-question answer state
+    const userAnswer = isSpeaking 
+      ? (voiceAnswers[questionId] || '').trim() 
+      : (answers[questionId] || '').trim();
     
     if (!userAnswer) {
-      setFeedback({ correct: false, message: '⚠️ Please enter an answer.' });
+      setFeedback(prev => ({
+        ...prev,
+        [questionId]: { correct: false, message: '⚠️ Please enter an answer.' }
+      }));
       return;
     }
 
     setEvaluating(true);
-    setFeedback(null);
     
     try {
       const isFreeText = question.type === 'free-text' || question.evaluationType === 'semantic';
@@ -98,24 +103,27 @@ export default function LearningPath({ token }) {
         const result = await response.json();
         const speechEval = result.speechEvaluation;
         
-        setFeedback({
-          correct: result.correct,
-          message: result.correct 
-            ? `✅ Excellent speaking! Score: ${speechEval.grade}%\n${speechEval.feedback}` 
-            : `📝 Score: ${speechEval.grade}%\n${speechEval.feedback}`,
-          speechScore: speechEval.grade,
-          speechMetrics: {
-            fluency: speechEval.fluency,
-            vocabulary: speechEval.vocabulary,
-            coherence: speechEval.coherence,
-            wordCount: speechEval.wordCount,
-            sentenceCount: speechEval.sentenceCount
+        setFeedback(prev => ({
+          ...prev,
+          [questionId]: {
+            correct: result.correct,
+            message: result.correct 
+              ? `✅ Excellent speaking! Score: ${speechEval.grade}%\n${speechEval.feedback}` 
+              : `📝 Score: ${speechEval.grade}%\n${speechEval.feedback}`,
+            speechScore: speechEval.grade,
+            speechMetrics: {
+              fluency: speechEval.fluency,
+              vocabulary: speechEval.vocabulary,
+              coherence: speechEval.coherence,
+              wordCount: speechEval.wordCount,
+              sentenceCount: speechEval.sentenceCount
+            }
           }
-        });
+        }));
         
         // Reset voice answer after submission
-        setVoiceAnswer('');
-        setAnswer('');
+        setVoiceAnswers(prev => ({ ...prev, [questionId]: '' }));
+        setAnswers(prev => ({ ...prev, [questionId]: '' }));
       } else if (isFreeText) {
         // Use NLP evaluation for free-text responses
         const result = await submit(token, question._id, false, userAnswer, true);
@@ -123,20 +131,23 @@ export default function LearningPath({ token }) {
         const nlpResult = result.nlpEvaluation;
         const passed = nlpResult?.status === 'graded' && nlpResult?.grade >= 70;
         
-        setFeedback({
-          correct: passed,
-          message: passed 
-            ? `✅ Great work! Score: ${nlpResult.grade}% - ${nlpResult.feedback}` 
-            : nlpResult?.status === 'pending_manual_review'
-              ? `⏳ ${nlpResult.feedback}`
-              : `📝 Score: ${nlpResult.grade}% - ${nlpResult.feedback}`,
-          nlpScore: nlpResult?.grade,
-          nlpConfidence: nlpResult?.confidence,
-          needsReview: nlpResult?.status === 'pending_manual_review',
-          aiFeedback: result.aiFeedback
-        });
+        setFeedback(prev => ({
+          ...prev,
+          [questionId]: {
+            correct: passed,
+            message: passed 
+              ? `✅ Great work! Score: ${nlpResult.grade}% - ${nlpResult.feedback}` 
+              : nlpResult?.status === 'pending_manual_review'
+                ? `⏳ ${nlpResult.feedback}`
+                : `📝 Score: ${nlpResult.grade}% - ${nlpResult.feedback}`,
+            nlpScore: nlpResult?.grade,
+            nlpConfidence: nlpResult?.confidence,
+            needsReview: nlpResult?.status === 'pending_manual_review',
+            aiFeedback: result.aiFeedback
+          }
+        }));
         
-        setAnswer('');
+        setAnswers(prev => ({ ...prev, [questionId]: '' }));
       } else {
         // Traditional objective evaluation
         const correctAnswer = (question.answer || '').toLowerCase();
@@ -144,30 +155,36 @@ export default function LearningPath({ token }) {
         
         const result = await submit(token, question._id, isCorrect, userAnswer, false);
         
-        setFeedback({
-          correct: result.correct,
-          message: result.correct 
-            ? '✅ Correct! Great job!' 
-            : `❌ Incorrect. The correct answer is: "${question.answer}"`,
-          aiFeedback: result.aiFeedback
-        });
+        setFeedback(prev => ({
+          ...prev,
+          [questionId]: {
+            correct: result.correct,
+            message: result.correct 
+              ? '✅ Correct! Great job!' 
+              : `❌ Incorrect. The correct answer is: "${question.answer}"`,
+            aiFeedback: result.aiFeedback
+          }
+        }));
         
         // Get AI explanation after answering incorrectly
         if (!result.correct) {
           getAIHelp(question.text);
         }
         
-        setAnswer('');
+        setAnswers(prev => ({ ...prev, [questionId]: '' }));
       }
       
       // Reload learning path to get updated theta and recommendations
       setTimeout(() => loadPath(), 1000);
     } catch (e) {
       console.error('Submit error:', e);
-      setFeedback({ 
-        correct: false, 
-        message: '❌ Failed to submit answer. Please try again.' 
-      });
+      setFeedback(prev => ({
+        ...prev,
+        [questionId]: { 
+          correct: false, 
+          message: '❌ Failed to submit answer. Please try again.' 
+        }
+      }));
     } finally {
       setEvaluating(false);
     }
@@ -343,8 +360,8 @@ export default function LearningPath({ token }) {
                           <div className="learning-path-voice-section">
                             <VoiceInput 
                               onTranscriptChange={(transcript) => {
-                                setVoiceAnswer(transcript);
-                                setAnswer(transcript);
+                                setVoiceAnswers(prev => ({ ...prev, [item.id || item.question._id]: transcript }));
+                                setAnswers(prev => ({ ...prev, [item.id || item.question._id]: transcript }));
                               }}
                               placeholder="Click the microphone and speak your answer clearly..."
                             />
@@ -357,8 +374,8 @@ export default function LearningPath({ token }) {
                             {question.options.map((opt, idx) => (
                               <button
                                 key={idx}
-                                onClick={() => setAnswer(opt)}
-                                className={`option-btn ${answer === opt ? 'selected' : ''}`}
+                                onClick={() => setAnswers(prev => ({ ...prev, [item.id || question._id]: opt }))}
+                                className={`option-btn ${(answers[item.id || question._id]) === opt ? 'selected' : ''}`}
                               >
                                 {opt}
                               </button>
@@ -370,8 +387,8 @@ export default function LearningPath({ token }) {
                         {!isSpeaking && (
                           <form onSubmit={(e) => handleAnswerSubmit(e, item)}>
                             <textarea
-                              value={answer}
-                              onChange={(e) => setAnswer(e.target.value)}
+                              value={answers[item.id || question._id] || ''}
+                              onChange={(e) => setAnswers(prev => ({ ...prev, [item.id || question._id]: e.target.value }))}
                               placeholder={isFreeText 
                                 ? "Write your detailed response here... (minimum 40 words for best evaluation)" 
                                 : "Your answer..."}
@@ -382,7 +399,7 @@ export default function LearningPath({ token }) {
                             <button 
                               type="submit" 
                               className="btn-submit-answer"
-                              disabled={evaluating || !answer.trim()}
+                              disabled={evaluating || !(answers[item.id || question._id] || '').trim()}
                             >
                               {evaluating ? '⏳ Evaluating...' : isFreeText ? '📤 Submit for Evaluation' : 'Submit Answer'}
                             </button>
@@ -395,7 +412,7 @@ export default function LearningPath({ token }) {
                             <button 
                               type="submit" 
                               className="btn-submit-answer"
-                              disabled={evaluating || !voiceAnswer.trim()}
+                              disabled={evaluating || !(voiceAnswers[item.id || question._id] || '').trim()}
                               style={{ width: '100%' }}
                             >
                               {evaluating ? '⏳ Evaluating Speech...' : '🎤 Submit Speaking Response'}
@@ -403,59 +420,59 @@ export default function LearningPath({ token }) {
                           </form>
                         )}
                         
-                        {feedback && (
-                          <div className={`feedback ${feedback.correct ? 'correct' : feedback.needsReview ? 'review' : 'incorrect'}`}>
-                            <div className="feedback-message">{feedback.message}</div>
+                        {feedback[item.id || question._id] && (
+                          <div className={`feedback ${feedback[item.id || question._id].correct ? 'correct' : feedback[item.id || question._id].needsReview ? 'review' : 'incorrect'}`}>
+                            <div className="feedback-message">{feedback[item.id || question._id].message}</div>
                             
                             {/* Speech Metrics Display */}
-                            {feedback.speechMetrics && (
+                            {feedback[item.id || question._id].speechMetrics && (
                               <div className="speech-metrics">
                                 <h5>📊 Speech Analysis</h5>
                                 <div className="metrics-grid">
                                   <div className="metric">
                                     <span className="metric-label">Fluency:</span>
-                                    <span className="metric-value">{feedback.speechMetrics.fluency}%</span>
+                                    <span className="metric-value">{feedback[item.id || question._id].speechMetrics.fluency}%</span>
                                   </div>
                                   <div className="metric">
                                     <span className="metric-label">Vocabulary:</span>
-                                    <span className="metric-value">{feedback.speechMetrics.vocabulary}%</span>
+                                    <span className="metric-value">{feedback[item.id || question._id].speechMetrics.vocabulary}%</span>
                                   </div>
                                   <div className="metric">
                                     <span className="metric-label">Coherence:</span>
-                                    <span className="metric-value">{feedback.speechMetrics.coherence}%</span>
+                                    <span className="metric-value">{feedback[item.id || question._id].speechMetrics.coherence}%</span>
                                   </div>
                                   <div className="metric">
                                     <span className="metric-label">Words Spoken:</span>
-                                    <span className="metric-value">{feedback.speechMetrics.wordCount}</span>
+                                    <span className="metric-value">{feedback[item.id || question._id].speechMetrics.wordCount}</span>
                                   </div>
                                   <div className="metric">
                                     <span className="metric-label">Sentences:</span>
-                                    <span className="metric-value">{feedback.speechMetrics.sentenceCount}</span>
+                                    <span className="metric-value">{feedback[item.id || question._id].speechMetrics.sentenceCount}</span>
                                   </div>
                                 </div>
                               </div>
                             )}
                             
                             {/* NLP Metrics Display */}
-                            {feedback.nlpScore !== undefined && (
+                            {feedback[item.id || question._id].nlpScore !== undefined && (
                               <div className="nlp-details">
                                 <div className="nlp-score">
-                                  Score: {feedback.nlpScore}% 
-                                  {feedback.nlpConfidence && ` (Confidence: ${Math.round(feedback.nlpConfidence * 100)}%)`}
+                                  Score: {feedback[item.id || question._id].nlpScore}% 
+                                  {feedback[item.id || question._id].nlpConfidence && ` (Confidence: ${Math.round(feedback[item.id || question._id].nlpConfidence * 100)}%)`}
                                 </div>
                               </div>
                             )}
                             
-                            {feedback.aiFeedback && (
+                            {feedback[item.id || question._id].aiFeedback && (
                               <div className="ai-feedback-box">
                                 <strong>💡 AI Feedback:</strong>
-                                <p>{feedback.aiFeedback}</p>
+                                <p>{feedback[item.id || question._id].aiFeedback}</p>
                               </div>
                             )}
                           </div>
                         )}
                         
-                        {!feedback && !evaluating && (
+                        {!feedback[item.id || question._id] && !evaluating && (
                           <button
                             onClick={() => getAIHelp(question.text)}
                             className="btn-ai-help"

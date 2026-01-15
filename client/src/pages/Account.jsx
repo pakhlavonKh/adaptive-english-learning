@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Edit2, Save, X, LogOut, BookOpen, Users, Shield } from 'lucide-react';
-import LMSIntegration from '../components/LMSIntegration';
 
 export default function Account({ token, user, onLogout }) {
   const navigate = useNavigate();
@@ -352,24 +351,26 @@ export default function Account({ token, user, onLogout }) {
               />
             </div>
 
-            {/* Learning Stats */}
-            <div style={{
-              marginTop: '16px',
-              padding: '20px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '12px',
-              color: 'white'
-            }}>
-              <h3 style={{ fontSize: '18px', marginBottom: '12px', fontWeight: '700' }}>
-                Learning Progress
-              </h3>
-              <div style={{ fontSize: '32px', fontWeight: '800' }}>
-                θ = {profile.theta?.toFixed(2) || '0.00'}
+            {/* Learning Stats - Only for Students */}
+            {user?.role === 'student' && (
+              <div style={{
+                marginTop: '16px',
+                padding: '20px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: '12px',
+                color: 'white'
+              }}>
+                <h3 style={{ fontSize: '18px', marginBottom: '12px', fontWeight: '700' }}>
+                  Learning Progress
+                </h3>
+                <div style={{ fontSize: '32px', fontWeight: '800' }}>
+                  θ = {profile.theta?.toFixed(2) || '0.00'}
+                </div>
+                <p style={{ opacity: 0.9, fontSize: '14px', marginTop: '4px' }}>
+                  Your current ability level
+                </p>
               </div>
-              <p style={{ opacity: 0.9, fontSize: '14px', marginTop: '4px' }}>
-                Your current ability level
-              </p>
-            </div>
+            )}
           </div>
 
           {editing && (
@@ -426,8 +427,6 @@ export default function Account({ token, user, onLogout }) {
             </div>
           )}
         </form>
-
-        <LMSIntegration token={token} />
       </div>
       </div>
     </div>

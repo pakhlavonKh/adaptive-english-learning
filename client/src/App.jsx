@@ -4,6 +4,8 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
 import Support from "./pages/Support";
 import Privacy from "./pages/Privacy";
 import Badges from "./pages/Badges";
@@ -66,7 +68,13 @@ export default function App() {
           path="/dashboard" 
           element={
             token ? (
-              <Dashboard token={token} user={user} onLogout={handleLogout} />
+              user?.role === 'admin' ? (
+                <AdminDashboard token={token} user={user} onLogout={handleLogout} />
+              ) : user?.role === 'teacher' ? (
+                <TeacherDashboard token={token} user={user} onLogout={handleLogout} />
+              ) : (
+                <Dashboard token={token} user={user} onLogout={handleLogout} />
+              )
             ) : (
               <Navigate to="/login" replace />
             )

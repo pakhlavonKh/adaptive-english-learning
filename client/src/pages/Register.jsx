@@ -65,7 +65,6 @@ export default function Register({ onLogin }) {
         <div className="form-group">
           <label>Username</label>
           <div className="input-wrapper">
-            <User size={20} className="input-icon" />
             <input 
               type="text"
               placeholder="Choose a username" 
@@ -80,7 +79,6 @@ export default function Register({ onLogin }) {
         <div className="form-group">
           <label>Password</label>
           <div className="input-wrapper">
-            <Lock size={20} className="input-icon" />
             <input 
               type="password"
               placeholder="Create a strong password" 
@@ -95,7 +93,6 @@ export default function Register({ onLogin }) {
         <div className="form-group">
           <label>Confirm Password</label>
           <div className="input-wrapper">
-            <Lock size={20} className="input-icon" />
             <input 
               type="password"
               placeholder="Confirm your password" 

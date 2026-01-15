@@ -5,6 +5,15 @@
 
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 import { allQuestions, modules } from '../src/data/contentData.js';
 import QuestionModel from '../src/models/question.js';
 import ModuleModel from '../src/models/module.js';
@@ -64,7 +73,7 @@ async function resetDatabase() {
       {
         email: 'student_demo@example.com',
         username: 'student_demo',
-        password: await bcrypt.hash('password123', 10),
+        password: 'password123',
         firstName: 'Demo',
         lastName: 'Student',
         role: 'student',
@@ -77,7 +86,7 @@ async function resetDatabase() {
       {
         email: 'teacher_demo@example.com',
         username: 'teacher_demo',
-        password: await bcrypt.hash('password123', 10),
+        password: 'password123',
         firstName: 'Demo',
         lastName: 'Teacher',
         role: 'teacher',
@@ -89,7 +98,7 @@ async function resetDatabase() {
       {
         email: 'admin_demo@example.com',
         username: 'admin_demo',
-        password: await bcrypt.hash('password123', 10),
+        password: 'password123',
         firstName: 'Demo',
         lastName: 'Admin',
         role: 'admin'
