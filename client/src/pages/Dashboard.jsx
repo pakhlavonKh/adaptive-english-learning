@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNextQuestion, submit, seed, checkNeedsGeneration } from '../api';
+import { checkNeedsGeneration } from '../api';
 import LearningPath from './LearningPath';
 import InitialPathGenerator from '../components/InitialPathGenerator';
-import AIAssistant from '../components/AIAssistant';
 
 function getLanguageCode() {
   return localStorage.getItem("languageCode") || "en";
@@ -20,12 +19,10 @@ function appendOfflineProgress(entry) {
 
 export default function Dashboard({ token, user, onLogout }) {
   const navigate = useNavigate();
-  const [status, setStatus] = useState(null);
   const [needsPathGeneration, setNeedsPathGeneration] = useState(false);
   const [checkingPath, setCheckingPath] = useState(true);
   const [generatedPath, setGeneratedPath] = useState(null);
-  const [showPath, setShowPath] = useState(false);
-  const [showAI, setShowAI] = useState(false);
+  const [showPath, setShowPath] = useState(true);
 
   const load = async () => {
     try {
@@ -59,49 +56,12 @@ export default function Dashboard({ token, user, onLogout }) {
 
   useEffect(() => {
     checkInitialPath();
-    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePathGenerated = (path) => {
     setGeneratedPath(path);
     setNeedsPathGeneration(false);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!question) return;
-
-    const userAnswer = (answer || '').trim();
-    const correct =
-      userAnswer.toLowerCase() === (question.answer || '').toLowerCase();
-
-    const payload = {
-      questionId: question.id,
-      correct,
-      // helpful metadata for sync/debugging
-      languageCode: getLanguageCode(),
-      answeredAt: new Date().toISOString()
-    };
-
-    try {
-      const res = await submit(token, question.id, correct);
-      setStatus(res.correct ? 'Correct' : 'Incorrect');
-      setAnswer('');
-      await load();
-    } catch (e) {
-      // If offline / network error, save progress locally for background sync
-      const isNetworkError = !e.response; // axios: no response usually means network/offline
-      if (isNetworkError) {
-        appendOfflineProgress(payload);
-        setStatus('Offline: progress saved and will sync when internet returns ✅');
-        setAnswer('');
-        await load();
-        return;
-      }
-
-      setStatus(e.response?.data?.error || 'Submit failed');
-    }
   };
 
   // Show loading state while checking
@@ -136,7 +96,6 @@ export default function Dashboard({ token, user, onLogout }) {
           <div className="dashboard-nav-links">
             <button className="nav-link" onClick={() => navigate('/dashboard')}>Dashboard</button>
             <button className="nav-link" onClick={() => setShowPath((s) => !s)}>Learning Path</button>
-            <button className="nav-link" onClick={() => setShowAI((s) => !s)}>AI Assistant</button>
             <button className="nav-link" onClick={() => navigate('/support')}>Support</button>
             <button className="nav-link" onClick={() => navigate('/account')}>Account</button>
             <button className="btn-logout" onClick={onLogout}>Logout</button>
@@ -150,19 +109,9 @@ export default function Dashboard({ token, user, onLogout }) {
           <p className="welcome-subtitle">Ready to continue your English learning journey?</p>
         </div>
 
-        {/* {status && <div className="status-message">{status}</div>} */}
-
-        
-
         {showPath && (
           <div className="content-panel">
             <LearningPath token={token} />
-          </div>
-        )}
-
-        {showAI && (
-          <div className="content-panel">
-            <AIAssistant token={token} />
           </div>
         )}
       </div>

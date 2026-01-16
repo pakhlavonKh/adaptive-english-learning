@@ -54,6 +54,7 @@ async function seedDatabase() {
         insertedQuestions.push(newQuestion);
       } catch (error) {
         console.error(`   ⚠️  Error inserting question: ${question.text.substring(0, 50)}...`);
+        console.error(`      Details: ${error.message}`);
       }
     }
     

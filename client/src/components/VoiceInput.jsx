@@ -28,7 +28,7 @@ export default function VoiceInput({ onTranscriptChange, autoSubmit = false, pla
     if (autoSubmit && transcript && !isListening && !interimTranscript) {
       // Transcript is final and listening stopped
     }
-  }, [transcript, isListening, interimTranscript, onTranscriptChange, autoSubmit]);
+  }, [transcript, isListening, interimTranscript]); // Omit callbacks from deps to avoid infinite loops
 
   const handleToggle = () => {
     if (isListening) {
@@ -134,7 +134,7 @@ export default function VoiceInput({ onTranscriptChange, autoSubmit = false, pla
       {/* Instructions */}
       <div className="voice-instructions">
         <p className="voice-instruction-text">
-          💡 <strong>Tip:</strong> Speak clearly and at a normal pace. Click "Stop" when finished.
+          💡 <strong>Tips:</strong> Speak clearly at normal pace. Use Chrome/Edge/Safari. Check microphone permissions and ensure it's not muted. If no-speech error, speak louder.
         </p>
       </div>
     </div>

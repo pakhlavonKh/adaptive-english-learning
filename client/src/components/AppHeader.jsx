@@ -10,7 +10,6 @@ export default function AppHeader({ user, onLogout }) {
         <div className="dashboard-nav-links">
           <button className="nav-link" onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button className="nav-link" onClick={() => navigate('/learning-path')}>Learning Path</button>
-          <button className="nav-link" onClick={() => navigate('/ai-assistant')}>AI Assistant</button>
           <button className="nav-link" onClick={() => navigate('/support')}>Support</button>
           <button className="nav-link" onClick={() => navigate('/account')}>Account</button>
           <button className="btn-logout" onClick={onLogout}>Logout</button>

@@ -37,6 +37,16 @@ import monitoringService from './services/monitoringService.js';
 const app = express();
 // const prisma = new PrismaClient();
 const MONGODB_URI = process.env.MONGODB_URI || '';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret';
+
+// Helper to safely verify JWT and extract userId
+function verifyJWT(token, secret = JWT_SECRET) {
+  try {
+    return jwt.verify(token, secret);
+  } catch (err) {
+    return null;
+  }
+}
 
 // connect to MongoDB (non-blocking)
 connectMongo(MONGODB_URI).then(async ()=>{
@@ -45,7 +55,6 @@ connectMongo(MONGODB_URI).then(async ()=>{
 }).catch(err => {
   console.warn('MongoDB not connected:', err.message);
 });
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret';
 
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
@@ -422,9 +431,21 @@ app.get('/api/learning-path', async (req, res) => {
 // Get module details (items with question content)
 app.get('/api/module/:id', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  // Token verification is optional for module retrieval
+  if (token) {
+    const decoded = verifyJWT(token);
+    if (!decoded) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+  }
+  
+  // Prevent caching to ensure fresh data is always returned
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  
   try {
-    jwt.verify(token, JWT_SECRET);
     const id = req.params.id;
     const module = await ModuleModel.findById(id).lean();
     if (!module) return res.status(404).json({ error: 'Module not found' });
@@ -456,6 +477,13 @@ app.get('/api/module/:id', async (req, res) => {
         console.log(`   Loading item ${index + 1}, questionId: ${it.questionId}`);
         const q = it.questionId ? await QuestionModel.findById(it.questionId).lean() : null;
         console.log(`   Question found: ${q ? 'YES' : 'NO'}`);
+        if (q && index === 0) {
+          console.log(`   FIRST QUESTION DETAILS:`);
+          console.log(`     Text: ${q.text?.substring(0, 50)}`);
+          console.log(`     AudioUrl: ${q.audioUrl ? 'YES - ' + q.audioUrl : 'NO'}`);
+          console.log(`     Type: ${q.type}`);
+          console.log(`     Skill: ${q.skill}`);
+        }
         return { 
           ...it, 
           id: it._id || it.questionId || `item-${index}`,
@@ -1379,7 +1407,14 @@ app.post('/api/path/generate', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
 
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET) || {};
+    const decoded = jwt.verify(token, JWT_SECRET) || {};
+    const userId = decoded.userId;
+    
+    if (!userId) {
+      console.error('No userId in token. Decoded:', decoded);
+      return res.status(401).json({ error: 'Invalid token: no userId' });
+    }
+
     const { externalScores, targetSkills } = req.body;
 
     const path = await pathGenerationService.generateInitialPath(userId, {
@@ -1390,8 +1425,8 @@ app.post('/api/path/generate', async (req, res) => {
 
     res.json(path);
   } catch (e) {
-    console.error('Path generation error:', e);
-    res.status(500).json({ error: e.message, stack: e.stack });
+    console.error('Path generation error:', e.message);
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -1651,25 +1686,38 @@ app.post('/api/evaluate-response', async (req, res) => {
 
 // ===== AI ENDPOINTS =====
 
+function normalizeAI(text) {
+  return {
+    content: typeof text === 'string' ? text : JSON.stringify(text)
+  };
+}
 // Get AI-powered explanation for a concept
 app.post('/api/ai/explain', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token' });
 
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
+    jwt.verify(token, JWT_SECRET);
     const { concept, level } = req.body;
 
     if (!concept) {
       return res.status(400).json({ error: 'Concept is required' });
     }
 
-    const explanation = await aiService.explainConcept(concept, level || 'intermediate');
-    res.json({ explanation, concept });
+    const explanation = await aiService.explainConcept(
+      concept,
+      level || 'intermediate'
+    );
+
+    const normalized = normalizeAI(explanation);
+    res.json({ explanation: normalized.content });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('AI explain error:', e);
+    res.status(500).json({ error: 'AI explanation failed' });
   }
 });
+
+
 
 // Generate AI practice question
 app.post('/api/ai/generate-question', async (req, res) => {
@@ -1677,7 +1725,7 @@ app.post('/api/ai/generate-question', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
 
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
+    jwt.verify(token, JWT_SECRET);
     const { topic, difficulty, skillType } = req.body;
 
     if (!topic) {
@@ -1689,11 +1737,17 @@ app.post('/api/ai/generate-question', async (req, res) => {
       difficulty || 'intermediate',
       skillType || 'vocabulary'
     );
-    res.json(question);
+
+    res.json({
+      ...question,
+      content: question.text // 🔥 normalized field
+    });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('AI question error:', e);
+    res.status(500).json({ error: 'AI question generation failed' });
   }
 });
+
 
 // Get AI learning analysis
 app.get('/api/ai/analyze-progress', async (req, res) => {
@@ -1727,19 +1781,26 @@ app.post('/api/ai/conversation', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
 
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
+    jwt.verify(token, JWT_SECRET);
     const { topic, level } = req.body;
 
     if (!topic) {
       return res.status(400).json({ error: 'Topic is required' });
     }
 
-    const conversation = await aiService.generateConversation(topic, level || 'intermediate');
-    res.json({ conversation, topic });
+    const conversation = await aiService.generateConversation(
+      topic,
+      level || 'intermediate'
+    );
+
+    const normalized = normalizeAI(conversation);
+    res.json({ conversation: normalized.content });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('AI conversation error:', e);
+    res.status(500).json({ error: 'AI conversation failed' });
   }
 });
+
 
 // AI writing correction
 app.post('/api/ai/correct-writing', async (req, res) => {
@@ -1747,19 +1808,26 @@ app.post('/api/ai/correct-writing', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
 
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
+    jwt.verify(token, JWT_SECRET);
     const { text, focusArea } = req.body;
 
     if (!text) {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    const correction = await aiService.correctWriting(text, focusArea || 'general');
-    res.json({ correction, originalText: text });
+    const correction = await aiService.correctWriting(
+      text,
+      focusArea || 'general'
+    );
+
+    const normalized = normalizeAI(correction);
+    res.json({ correction: normalized.content });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('AI writing error:', e);
+    res.status(500).json({ error: 'AI writing correction failed' });
   }
 });
+
 
 // ============================================================================
 // AUDIT LOG ENDPOINTS

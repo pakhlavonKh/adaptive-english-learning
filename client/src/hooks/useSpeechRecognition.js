@@ -30,6 +30,10 @@ export default function useSpeechRecognition() {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
     recognition.maxAlternatives = 1;
+    // Increase speech detection timeout and reduce threshold (more sensitive)
+    if (recognition.speechstart !== undefined) {
+      recognition.speechstart = 500; // Allow more time to detect speech
+    }
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -60,19 +64,22 @@ export default function useSpeechRecognition() {
       
       switch (event.error) {
         case 'no-speech':
-          setError('No speech detected. Please try again.');
+          setError('No speech detected. Speak louder or try again. Ensure microphone is not muted.');
           break;
         case 'audio-capture':
-          setError('Microphone not accessible. Please check permissions.');
+          setError('Microphone not accessible. Please check device and permissions.');
           break;
         case 'not-allowed':
-          setError('Microphone permission denied. Please enable microphone access.');
+          setError('Microphone permission denied. Enable mic access in browser settings.');
           break;
         case 'network':
-          setError('Network error occurred. Please check your connection.');
+          setError('Network error. Check internet connection and try again.');
+          break;
+        case 'service-not-allowed':
+          setError('Speech recognition service not available in this context.');
           break;
         default:
-          setError(`Error: ${event.error}`);
+          setError(`Speech error: ${event.error}. Try again or check microphone.`);
       }
     };
 
@@ -87,7 +94,7 @@ export default function useSpeechRecognition() {
         recognitionRef.current.stop();
       }
     };
-  }, [transcript]);
+  }, []); // Empty dependency array: set up listener once on mount
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {

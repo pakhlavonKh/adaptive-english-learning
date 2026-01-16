@@ -7,6 +7,8 @@
     "build": "tsc",
     "seed": "node scripts/seed-comprehensive.js",
     "seed:quick": "node scripts/seed-db.js",
+    "seed:free-text": "node scripts/seed-free-text.js",
+    "seed:audio": "node scripts/add-audio-to-listening.js",
     "content:stats": "node scripts/view-content-stats.js",
     "clear:old": "node scripts/clear-old-questions.js",
     "reset": "node scripts/reset-database.js",
@@ -18,6 +20,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
+    "google-tts-api": "^2.0.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.6.0"
   },

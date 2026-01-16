@@ -12,6 +12,7 @@ import Badges from "./pages/Badges";
 import Calendar from "./pages/Calendar";
 import MonitoringDashboard from "./pages/MonitoringDashboard";
 import Account from "./pages/Account";
+import AIAssistant from "./components/AIAssistant";
 import NotificationList from "./components/Notifications/NotificationList";
 import { initBackgroundSync } from "./utils/backgroundSync";
 
@@ -75,6 +76,16 @@ export default function App() {
               ) : (
                 <Dashboard token={token} user={user} onLogout={handleLogout} />
               )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/ai-assistant" 
+          element={
+            token ? (
+              <AIAssistant token={token} />
             ) : (
               <Navigate to="/login" replace />
             )

@@ -57,7 +57,7 @@ export const getLearningPath = (token, languageCode = "en") =>
 
 export const getModule = (token, id, languageCode = "en") =>
   API.get(`/module/${id}`, {
-    params: { languageCode },
+    params: { languageCode, t: Date.now() },
     headers: { Authorization: `Bearer ${token}` }
   }).then((r) => r.data);
 
