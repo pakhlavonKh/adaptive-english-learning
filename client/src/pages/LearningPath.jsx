@@ -446,8 +446,8 @@ export default function LearningPath({ token }) {
                       <div className="question-content">
                         <p className="question-text">{question.text}</p>
 
-                        {/* Audio Player for Listening Questions */}
-                        {question.audioUrl && (
+                        {/* Audio Player for Questions with Audio */}
+                        {(question.audioUrl || question.audioText) && (
                           <div className="audio-section">
                             <label className="audio-label">🎧 Listen to the audio:</label>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap' }}>
