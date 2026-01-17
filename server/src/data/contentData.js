@@ -192,29 +192,29 @@ export const speakingQuestions = [
 // ===== FREE-TEXT QUESTIONS (15 TOTAL) - FILL-IN-BLANK AND SHORT ANSWER =====
 export const freeTextQuestions = [
   // A1 Level
-  { text: 'Complete the sentence: "I have _____ cat."', answer: 'a', difficulty: 0.2, skill: 'writing', type: 'free-text', explanation: 'Use the article "a" before singular nouns starting with consonants.' },
-  { text: 'Fill in: "She _____ to school every day."', answer: 'goes', difficulty: 0.2, skill: 'writing', type: 'free-text', explanation: 'Use simple present tense "goes" for habitual actions.' },
-  { text: 'What is the opposite of "big"?', answer: 'small', difficulty: 0.2, skill: 'reading', type: 'free-text', explanation: 'The antonym (opposite) of "big" is "small".' },
-  { text: 'What does the word "happy" mean?', answer: 'feeling joy or pleasure', difficulty: 0.3, skill: 'reading', type: 'free-text', explanation: 'Happy means feeling joy, pleasure, or contentment.' },
+  { text: 'Complete the sentence: "I have _____ cat."', answer: 'a', difficulty: 0.2, skill: 'writing', type: 'free-text', audioText: 'Complete the sentence: I have a cat.', explanation: 'Use the article "a" before singular nouns starting with consonants.' },
+  { text: 'Fill in: "She _____ to school every day."', answer: 'goes', difficulty: 0.2, skill: 'writing', type: 'free-text', audioText: 'Fill in: She goes to school every day.', explanation: 'Use simple present tense "goes" for habitual actions.' },
+  { text: 'What is the opposite of "big"?', answer: 'small', difficulty: 0.2, skill: 'reading', type: 'free-text', audioText: 'What is the opposite of big? The answer is small.', explanation: 'The antonym (opposite) of "big" is "small".' },
+  { text: 'What does the word "happy" mean?', answer: 'feeling joy or pleasure', difficulty: 0.3, skill: 'reading', type: 'free-text', audioText: 'What does the word happy mean? Happy means feeling joy or pleasure.', explanation: 'Happy means feeling joy, pleasure, or contentment.' },
 
   // A2 Level
-  { text: 'Complete: "I have been studying English _____ three years."', answer: 'for', difficulty: 0.4, skill: 'writing', type: 'free-text', explanation: 'Use "for" with durations. Example: "I have been studying for three years."' },
-  { text: 'Fill in: "She _____ (go) to the store yesterday."', answer: 'went', difficulty: 0.3, skill: 'writing', type: 'free-text', explanation: 'Use simple past tense "went" for completed actions.' },
-  { text: 'What is a synonym for "happy"?', answer: 'joyful, cheerful, or glad', difficulty: 0.4, skill: 'reading', type: 'free-text', explanation: 'Synonyms for "happy" include: joyful, cheerful, glad, delighted, content.' },
-  { text: 'What does "ambition" mean?', answer: 'a strong desire to succeed', difficulty: 0.5, skill: 'reading', type: 'free-text', explanation: 'Ambition is a strong desire to succeed or achieve goals.' },
+  { text: 'Complete: "I have been studying English _____ three years."', answer: 'for', difficulty: 0.4, skill: 'writing', type: 'free-text', audioText: 'Complete: I have been studying English for three years.', explanation: 'Use "for" with durations. Example: "I have been studying for three years."' },
+  { text: 'Fill in: "She _____ (go) to the store yesterday."', answer: 'went', difficulty: 0.3, skill: 'writing', type: 'free-text', audioText: 'Fill in: She went to the store yesterday.', explanation: 'Use simple past tense "went" for completed actions.' },
+  { text: 'What is a synonym for "happy"?', answer: 'joyful, cheerful, or glad', difficulty: 0.4, skill: 'reading', type: 'free-text', audioText: 'What is a synonym for happy? Joyful, cheerful, or glad are all synonyms for happy.', explanation: 'Synonyms for "happy" include: joyful, cheerful, glad, delighted, content.' },
+  { text: 'What does "ambition" mean?', answer: 'a strong desire to succeed', difficulty: 0.5, skill: 'reading', type: 'free-text', audioText: 'What does ambition mean? Ambition means a strong desire to succeed.', explanation: 'Ambition is a strong desire to succeed or achieve goals.' },
 
   // B1 Level
-  { text: 'Complete: "If I _____ rich, I would travel around the world."', answer: 'were', difficulty: 0.6, skill: 'writing', type: 'free-text', explanation: 'Use "were" for hypothetical situations in conditional sentences.' },
-  { text: 'Write a sentence using the word "although".', answer: 'Although it was raining, we went for a walk.', difficulty: 0.7, skill: 'writing', type: 'free-text', explanation: '"Although" shows contrast between two ideas. Example: "Although it was raining, we went for a walk."' },
-  { text: 'What does "resilience" mean?', answer: 'the ability to recover or bounce back from difficulties', difficulty: 1.0, skill: 'reading', type: 'free-text', explanation: 'Resilience is the ability to recover from difficulties or adapt to change.' },
-  { text: 'Explain the difference between "affect" and "effect".', answer: 'Affect is a verb (to influence), effect is a noun (a result or consequence).', difficulty: 1.1, skill: 'writing', type: 'free-text', explanation: 'Affect = verb (to influence); Effect = noun (result). "This will affect the outcome" vs "The effect was positive."' },
+  { text: 'Complete: "If I _____ rich, I would travel around the world."', answer: 'were', difficulty: 0.6, skill: 'writing', type: 'free-text', audioText: 'Complete: If I were rich, I would travel around the world.', explanation: 'Use "were" for hypothetical situations in conditional sentences.' },
+  { text: 'Write a sentence using the word "although".', answer: 'Although it was raining, we went for a walk.', difficulty: 0.7, skill: 'writing', type: 'free-text', audioText: 'Write a sentence using the word although. Example: Although it was raining, we went for a walk.', explanation: '"Although" shows contrast between two ideas. Example: "Although it was raining, we went for a walk."' },
+  { text: 'What does "resilience" mean?', answer: 'the ability to recover or bounce back from difficulties', difficulty: 1.0, skill: 'reading', type: 'free-text', audioText: 'What does resilience mean? Resilience means the ability to recover or bounce back from difficulties.', explanation: 'Resilience is the ability to recover from difficulties or adapt to change.' },
+  { text: 'Explain the difference between "affect" and "effect".', answer: 'Affect is a verb (to influence), effect is a noun (a result or consequence).', difficulty: 1.1, skill: 'writing', type: 'free-text', audioText: 'Explain the difference between affect and effect. Affect is a verb meaning to influence. Effect is a noun meaning a result or consequence.', explanation: 'Affect = verb (to influence); Effect = noun (result). "This will affect the outcome" vs "The effect was positive."' },
 
   // B2 Level
-  { text: 'What does "pragmatic" mean?', answer: 'dealing with things in a practical, realistic way', difficulty: 1.3, skill: 'reading', type: 'free-text', explanation: 'Pragmatic means dealing with facts and practical matters rather than theory or idealism.' },
-  { text: 'Complete: "The data _____ (appear) to support the hypothesis."', answer: 'appears', difficulty: 1.2, skill: 'writing', type: 'free-text', explanation: 'When the subject is singular (data as a collective noun), use "appears".' },
+  { text: 'What does "pragmatic" mean?', answer: 'dealing with things in a practical, realistic way', difficulty: 1.3, skill: 'reading', type: 'free-text', audioText: 'What does pragmatic mean? Pragmatic means dealing with things in a practical, realistic way.', explanation: 'Pragmatic means dealing with facts and practical matters rather than theory or idealism.' },
+  { text: 'Complete: "The data _____ (appear) to support the hypothesis."', answer: 'appears', difficulty: 1.2, skill: 'writing', type: 'free-text', audioText: 'Complete: The data appears to support the hypothesis.', explanation: 'When the subject is singular (data as a collective noun), use "appears".' },
 
   // C1 Level
-  { text: 'What does "ubiquitous" mean?', answer: 'present, appearing, or found everywhere', difficulty: 2.1, skill: 'reading', type: 'free-text', explanation: 'Ubiquitous means present, appearing, or found everywhere at the same time.' }
+  { text: 'What does "ubiquitous" mean?', answer: 'present, appearing, or found everywhere', difficulty: 2.1, skill: 'reading', type: 'free-text', audioText: 'What does ubiquitous mean? Ubiquitous means present, appearing, or found everywhere.', explanation: 'Ubiquitous means present, appearing, or found everywhere at the same time.' }
 ];
 
 export const allQuestions = [
