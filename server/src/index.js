@@ -413,10 +413,15 @@ app.get('/api/learning-path', async (req, res) => {
     // load modules from Mongo
     const modules = await ModuleModel.find().lean();
     const targetLevel = thetaToLevel(user.theta);
-    modules.sort((a, b) => Math.abs(a.level - targetLevel) - Math.abs(b.level - targetLevel));
+    
+    // Filter modules within 1 level of user's current level
+    const filtered = modules.filter(m => Math.abs(m.level - targetLevel) <= 1);
+    
+    // Sort by closeness to target level
+    filtered.sort((a, b) => Math.abs(a.level - targetLevel) - Math.abs(b.level - targetLevel));
     
     // Map _id to id for frontend compatibility
-    const modulesWithId = modules.map(m => ({
+    const modulesWithId = filtered.map(m => ({
       ...m,
       id: m._id.toString()
     }));

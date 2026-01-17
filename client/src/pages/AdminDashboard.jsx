@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, UserCheck, UserCog, ChevronDown, LogOut, BookOpen, User } from 'lucide-react';
+import { Shield, Users, UserCheck, UserCog, LogOut, BookOpen, User } from 'lucide-react';
 
 export default function AdminDashboard({ token, user, onLogout }) {
   const navigate = useNavigate();
@@ -74,6 +74,8 @@ export default function AdminDashboard({ token, user, onLogout }) {
             <p className="header-subtitle">Manage users and system settings</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            
+            {/* 1. Dashboard Butonu */}
             <button 
               className="logout-btn" 
               onClick={() => navigate('/dashboard')}
@@ -82,6 +84,8 @@ export default function AdminDashboard({ token, user, onLogout }) {
               <BookOpen size={20} />
               Dashboard
             </button>
+
+            {/* 2. Account Butonu */}
             <button 
               className="logout-btn" 
               onClick={() => navigate('/account')}
@@ -90,6 +94,8 @@ export default function AdminDashboard({ token, user, onLogout }) {
               <User size={20} />
               Account
             </button>
+
+            {/* 3. Teacher Butonu (Düzelttim, içinden fazlalıkları attım) */}
             <button 
               className="logout-btn" 
               onClick={() => navigate('/teacher')}
@@ -98,10 +104,23 @@ export default function AdminDashboard({ token, user, onLogout }) {
               <Users size={20} />
               Teacher
             </button>
+
+            {/* 4. YENİ SECURITY BUTONU (Diğerleriyle uyumlu) */}
+            <button 
+              className="logout-btn" 
+              onClick={() => navigate('/admin/audit-logs')}
+              style={{ background: 'rgba(220, 38, 38, 0.2)', color: '#fee2e2' }} // Hafif kırmızı arka plan
+            >
+              <Shield size={20} />
+              Security Logs
+            </button>
+
+            {/* 5. Logout Butonu */}
             <button className="logout-btn" onClick={onLogout}>
               <LogOut size={20} />
               Logout
             </button>
+
           </div>
         </div>
       </header>

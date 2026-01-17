@@ -74,6 +74,17 @@ async function seedDatabase() {
       speaking: insertedQuestions.filter(q => q.skill === 'speaking')
     };
 
+    // Separate free-text questions by skill
+    const freeTextBySkill = {
+      reading: insertedQuestions.filter(q => q.skill === 'reading' && q.type === 'free-text'),
+      writing: insertedQuestions.filter(q => q.skill === 'writing' && q.type === 'free-text')
+    };
+    let freeTextIndices = { reading: 0, writing: 0 };
+    
+    console.log(`\n📝 Free-text questions by skill:`);
+    console.log(`   Reading: ${freeTextBySkill.reading.length}`);
+    console.log(`   Writing: ${freeTextBySkill.writing.length}\n`);
+
     const insertedModules = [];
     for (const moduleData of modules) {
       const skillQuestions = modulesBySkill[moduleData.skill] || [];
@@ -85,14 +96,47 @@ async function seedDatabase() {
         return diff <= 1; // Questions within ±1 difficulty of module
       });
 
-      // Create items for this module
-      const items = matchingQuestions.slice(0, 8).map((q, index) => ({
-        title: `Exercise ${index + 1}`,
-        type: q.type || 'objective',
-        difficulty: q.difficulty,
-        discrimination: 1,
-        questionId: q._id
-      }));
+      // Create items for this module, mixing in free-text questions
+      const items = [];
+      let matchingIndex = 0;
+      for (let i = 0; i < 8 && (matchingIndex < matchingQuestions.length || (moduleData.skill === 'reading' || moduleData.skill === 'writing')); i++) {
+        let question;
+        
+        // Alternate between regular and free-text questions
+        if (i % 3 === 2 && (moduleData.skill === 'reading' || moduleData.skill === 'writing')) {
+          const freeTextList = freeTextBySkill[moduleData.skill] || [];
+          if (freeTextList.length > 0) {
+            question = freeTextList[freeTextIndices[moduleData.skill] % freeTextList.length];
+            freeTextIndices[moduleData.skill]++;
+          } else if (matchingIndex < matchingQuestions.length) {
+            question = matchingQuestions[matchingIndex++];
+          } else {
+            continue;
+          }
+        } else if (matchingIndex < matchingQuestions.length) {
+          question = matchingQuestions[matchingIndex++];
+        } else if (moduleData.skill === 'reading' || moduleData.skill === 'writing') {
+          const freeTextList = freeTextBySkill[moduleData.skill] || [];
+          if (freeTextList.length > 0) {
+            question = freeTextList[freeTextIndices[moduleData.skill] % freeTextList.length];
+            freeTextIndices[moduleData.skill]++;
+          } else {
+            continue;
+          }
+        } else {
+          continue;
+        }
+
+        if (question) {
+          items.push({
+            title: `Exercise ${items.length + 1}`,
+            type: question.type || 'objective',
+            difficulty: question.difficulty,
+            discrimination: 1,
+            questionId: question._id
+          });
+        }
+      }
 
       // Add some items without questions (for future content)
       if (items.length < 5) {
@@ -111,8 +155,9 @@ async function seedDatabase() {
         items
       });
 
+      const freeTextCount = items.filter(it => it.type === 'free-text').length;
       insertedModules.push(newModule);
-      console.log(`   ✓ Created module: ${newModule.title} (${items.length} items)`);
+      console.log(`   ✓ Created module: ${newModule.title} (${items.length} items${freeTextCount > 0 ? `, ${freeTextCount} free-text` : ''})`);
     }
 
     console.log(`\n✅ Inserted ${insertedModules.length} modules`);

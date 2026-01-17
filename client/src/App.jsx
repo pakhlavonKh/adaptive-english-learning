@@ -15,6 +15,7 @@ import Account from "./pages/Account";
 import AIAssistant from "./components/AIAssistant";
 import NotificationList from "./components/Notifications/NotificationList";
 import { initBackgroundSync } from "./utils/backgroundSync";
+import AdminAuditLogs from "./pages/AdminAuditLogs";
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -53,104 +54,114 @@ export default function App() {
       <NotificationList />
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route 
-          path="/login" 
-          element={
-            token ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
-          } 
-        />
-        <Route 
-          path="/register" 
-          element={
-            token ? <Navigate to="/dashboard" replace /> : <Register onLogin={handleLogin} />
-          } 
-        />
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/login"
           element={
             token ? (
-              user?.role === 'admin' ? (
-                <AdminDashboard token={token} user={user} onLogout={handleLogout} />
-              ) : user?.role === 'teacher' ? (
-                <TeacherDashboard token={token} user={user} onLogout={handleLogout} />
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            token ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Register onLogin={handleLogin} />
+            )
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            token ? (
+              user?.role === "admin" ? (
+                <AdminDashboard
+                  token={token}
+                  user={user}
+                  onLogout={handleLogout}
+                />
+              ) : user?.role === "teacher" ? (
+                <TeacherDashboard
+                  token={token}
+                  user={user}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Dashboard token={token} user={user} onLogout={handleLogout} />
               )
             ) : (
               <Navigate to="/login" replace />
             )
-          } 
+          }
         />
-        <Route 
-          path="/ai-assistant" 
+        <Route
+          path="/ai-assistant"
           element={
             token ? (
               <AIAssistant token={token} />
             ) : (
               <Navigate to="/login" replace />
             )
-          } 
+          }
         />
-        <Route 
-          path="/support" 
+        <Route
+          path="/support"
           element={
-            token ? (
-              <Support token={token} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
+            token ? <Support token={token} /> : <Navigate to="/login" replace />
+          }
         />
-        <Route 
-          path="/account" 
+        <Route
+          path="/account"
           element={
             token ? (
               <Account token={token} user={user} onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )
-          } 
+          }
         />
-        <Route 
-          path="/privacy" 
+        <Route
+          path="/privacy"
           element={
-            token ? (
-              <Privacy token={token} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
+            token ? <Privacy token={token} /> : <Navigate to="/login" replace />
+          }
         />
-        <Route 
-          path="/badges" 
+        <Route
+          path="/badges"
           element={
             token ? (
               <Badges token={token} user={user} />
             ) : (
               <Navigate to="/login" replace />
             )
-          } 
+          }
         />
-        <Route 
-          path="/calendar" 
+        <Route
+          path="/calendar"
           element={
             token ? (
               <Calendar token={token} user={user} />
             ) : (
               <Navigate to="/login" replace />
             )
-          } 
+          }
         />
-        <Route 
-          path="/monitoring" 
+        <Route
+          path="/monitoring"
           element={
-            token && user?.role === 'admin' ? (
+            token && user?.role === "admin" ? (
               <MonitoringDashboard token={token} />
             ) : (
               <Navigate to="/dashboard" replace />
             )
-          } 
+          }
         />
+
+        <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
